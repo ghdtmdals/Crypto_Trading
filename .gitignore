@@ -3,3 +3,17 @@ test.ipynb
 keys.py
 
 ETC/
+
+Database/crypto_info.json
+Database/trade_log.json
+
+__pycache__/
+Data/__pycache__/
+Data/News/__pycache__/
+Data/Upbit/__pycache__/
+Database/__pycache__/
+Model/__pycache__/
+Model/Dataloader/__pycache__/
+Model/ModelTrainer/__pycache__/
+Model/Network/__pycache__/
+Trade/__pycache__/
