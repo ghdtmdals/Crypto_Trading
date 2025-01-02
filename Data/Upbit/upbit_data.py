@@ -19,7 +19,7 @@ class UpbitPrice:
         with open(self.crypto_info_path, 'r', encoding = 'utf-8-sig') as f:
             crypto_info = json.load(f)
         
-        ### 정렬된 리스트이고 코인 수 자체가 그렇게 많지 않으니 이진탐색으로 토큰 탐색
+        ### 정렬된 리스트, 이진탐색으로 토큰 탐색
         self.token_index = self.binary_search(crypto_info)
         if self.token_index < 0:
             sys.exit("Token Not Found")
@@ -54,8 +54,8 @@ class UpbitPrice:
         with open(crypto_info_path, 'w', encoding = 'utf-8-sig') as f:
             json.dump(crypto_info, f, ensure_ascii = False)
 
-    def get_prices(self) -> list:
-        ### API로 한 번에 호출 가능
+    def get_prices(self) -> dict:
+        ### API로 한 번에 가격 정보 호출 가능
         payload = {"markets": self.token}
         url = "https://api.upbit.com/v1/ticker"
         resp = requests.get(url, params = payload)
@@ -67,12 +67,13 @@ class UpbitPrice:
             "high_price": resp.json()[0]['high_price'],
             "low_price": resp.json()[0]['low_price'],
             "trade_price": resp.json()[0]['trade_price'],
+            "signed_change_rate": resp.json()[0]['signed_change_rate'],
         }
 
         return price_info
 
-    ### 주의, 유의 지정 여부 구현
-    def get_market_events(self) -> bool:
+    ### 주의, 유의 지정 여부
+    def get_market_events(self) -> dict:
         url = "https://api.upbit.com/v1/market/all"
         payload = {'is_details': True}
         resp = requests.get(url, params = payload)
@@ -95,7 +96,7 @@ class UpbitPrice:
         return event_info
     
     ### 새로운 코인이 추가되었는지 저장된 리스트와 비교 후 추가
-    def check_new_crypto(self):
+    def check_new_crypto(self) -> None:
         url = "https://api.upbit.com/v1/market/all"
         resp = requests.get(url)
 
