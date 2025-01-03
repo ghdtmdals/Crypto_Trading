@@ -1,9 +1,5 @@
 import os
 
-import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-import keys
-
 import jwt
 import uuid
 import hashlib
@@ -19,25 +15,18 @@ from Data.Upbit.upbit_data import UpbitPrice
 from Model.Network.trade_algorithm import TradeStrategy
 
 class Trader:
-    def __init__(self, token: str):
-
-        ### Temporary, Delete Once Completed ###
-        ### Make Sure to Add These Two Lines in main.py
-        ### So these are added to env variables
-        os.environ["UPBIT_OPEN_API_ACCESS_KEY"] = keys.UPBIT_ACCESS_KEY
-        os.environ["UPBIT_OPEN_API_SECRET_KEY"] = keys.UPBIT_SECRET_KEY
-        ########################################
-
+    def __init__(self, coin_name: str):
         self.__access_key = os.environ["UPBIT_OPEN_API_ACCESS_KEY"]
         self.__secret_key = os.environ["UPBIT_OPEN_API_SECRET_KEY"]
 
-        self.token = token
+        self.coin_name = coin_name
+        self.token = None
 
     ### 토큰의 밸런스를 가져오기 위해 토큰이 몇 번째 인덱스인지 찾음
     ### token = "KRW-BTC" -> currency = "BTC"
-    def find_token(self, balance_info: list, token: str) -> int:
+    def find_token(self, balance_info: list, currency: str) -> int:
         for i in range(len(balance_info)):
-            if balance_info[i]['currency'] == token:
+            if balance_info[i]['currency'] == currency:
                 return i
         return -1
 
@@ -81,7 +70,8 @@ class Trader:
             params = self.ask(balance, proportion)
 
         url = "https://api.upbit.com/v1/orders"
-
+        
+        ### jwt 토큰 생성 과정
         query_string = unquote(urlencode(params, doseq=True)).encode("utf-8")
 
         m = hashlib.sha512()
@@ -146,7 +136,7 @@ class Trader:
         ### 데이터 모듈 초기화
         print("Loading Modules...")
         ### self.token = "Bitcoin"
-        upbit_caller = UpbitPrice(coin_name = self.token)
+        upbit_caller = UpbitPrice(coin_name = self.coin_name)
         ### self.token = "KRW-BTC"
         self.token = upbit_caller.token
         
