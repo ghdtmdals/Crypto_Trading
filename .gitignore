@@ -4,8 +4,7 @@ keys.py
 
 ETC/
 
-Database/crypto_info.json
-Database/trade_log.json
+Database/
 
 __pycache__/
 Data/__pycache__/
