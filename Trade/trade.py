@@ -19,7 +19,7 @@ from Data.Upbit.upbit_data import UpbitPrice
 from Model.Network.trade_algorithm import TradeStrategy
 
 class Trader:
-    def __init__(self, token):
+    def __init__(self, token: str):
 
         ### Temporary, Delete Once Completed ###
         ### Make Sure to Add These Two Lines in main.py
@@ -35,7 +35,7 @@ class Trader:
 
     ### 토큰의 밸런스를 가져오기 위해 토큰이 몇 번째 인덱스인지 찾음
     ### token = "KRW-BTC" -> currency = "BTC"
-    def find_token(self, balance_info, token) -> int:
+    def find_token(self, balance_info: list, token: str) -> int:
         for i in range(len(balance_info)):
             if balance_info[i]['currency'] == token:
                 return i
@@ -104,7 +104,7 @@ class Trader:
         resp = requests.post(url, json=params, headers=headers)
         return resp.json()
     
-    def bid(self, balance, proportion):
+    def bid(self, balance: dict, proportion: float) -> dict:
         params = {
             'market': self.token,
             'side': 'bid',
@@ -114,7 +114,7 @@ class Trader:
 
         return params
 
-    def ask(self, balance, proportion):
+    def ask(self, balance: dict, proportion: float) -> dict:
         params = {
             'market': self.token,
             'side': 'ask',
@@ -125,7 +125,7 @@ class Trader:
         return params
 
     ### 데이터 모두 합쳐서 저장
-    def save_data(self, data, save_path = "./Database/") -> None:
+    def save_data(self, data: dict, save_path: str = "./Database/") -> None:
         file_path = '%s/%s' % (save_path, 'trade_log.json')
         if not os.path.isfile(file_path):
             with open(file_path, "w", encoding = 'utf-8-sig') as f:
@@ -142,7 +142,7 @@ class Trader:
             with open(file_path, "w", encoding = 'utf-8-sig') as f:
                 json.dump(logs, f, ensure_ascii = False, indent = 4, sort_keys = True)
 
-    def start_trading(self): 
+    def start_trading(self) -> None: 
         ### 데이터 모듈 초기화
         print("Loading Modules...")
         ### self.token = "Bitcoin"
@@ -156,7 +156,7 @@ class Trader:
         start_time = datetime.datetime.now(timezone('Asia/Seoul'))
         tomorrow = start_time.date() + datetime.timedelta(days = 1)
 
-        print(f"Start Trading | Current Time {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Start Trading | Current Time {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
         while True:
             ### balance 호출
             balance = self.get_current_balance()
@@ -168,8 +168,8 @@ class Trader:
             upbit_data.update(upbit_caller.get_market_events())
 
             ### 데이터 병합
-            current_time = datetime.datetime.now()
-            data = {"Time": str(current_time)}
+            current_time = datetime.datetime.now(timezone('Asia/Seoul'))
+            data = {"Time": current_time.strftime('%Y-%m-%d %H:%M:%S')}
             data.update(balance)
             data.update(upbit_data)
 
@@ -190,14 +190,8 @@ class Trader:
                 tomorrow = current_time.date() + datetime.timedelta(days = 1)
                 upbit_caller.check_new_crypto()
 
-            print(f"Current Time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | " \
+            print(f"Current Time: {current_time.strftime('%Y-%m-%d %H:%M:%S')} | " \
                   + f"Current KRW Balance: {data['krw_balance']} | " \
                   + f"Currence {self.token} Balance: {data['token_balance']} | Trade Call: {trade_call}")
 
             time.sleep(60)
-
-
-
-if __name__ == "__main__":
-    trade = Trader(token = 'Bitcoin')
-    trade.start_trading()

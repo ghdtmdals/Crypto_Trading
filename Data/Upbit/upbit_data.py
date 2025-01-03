@@ -6,7 +6,7 @@ import requests
 import json
 
 class UpbitPrice:
-    def __init__(self, data_path = "./Database/", coin_name: str = 'Bitcoin'):
+    def __init__(self, data_path: str = "./Database/", coin_name: str = 'Bitcoin'):
         self.crypto_info_path = '%s%s' % (data_path, 'crypto_info.json')
         self.coin_name = coin_name
         self.token = self.get_token()
@@ -43,6 +43,8 @@ class UpbitPrice:
         url = "https://api.upbit.com/v1/market/all"
         resp = requests.get(url)
 
+        ### BTC-ETH와 같이 비트코인이 화폐단위인 경우도 있음
+        ### KRW로 시작하는 토큰만 추출
         crypto_info = []
         for crypto in resp.json():
             if crypto["market"].startswith("KRW"):
