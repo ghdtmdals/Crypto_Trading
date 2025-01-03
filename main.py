@@ -1,6 +1,13 @@
+import os
+import keys
 from Trade.trade import Trader
 
+### DB 로드와 같은 작업 수행
+
 def main(*token):
+    os.environ["UPBIT_OPEN_API_ACCESS_KEY"] = keys.UPBIT_ACCESS_KEY
+    os.environ["UPBIT_OPEN_API_SECRET_KEY"] = keys.UPBIT_SECRET_KEY
+
     if len(token) == 1:
         single_token_trade(token)
     else:

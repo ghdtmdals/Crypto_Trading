@@ -4,12 +4,19 @@ from typing import List
 
 import requests
 import json
+import datetime
+from dateutil.parser import parse
+from pytz import timezone
 
 class UpbitPrice:
-    def __init__(self, data_path: str = "./Database/", coin_name: str = 'Bitcoin'):
-        self.crypto_info_path = '%s%s' % (data_path, 'crypto_info.json')
+    def __init__(self, coin_name: str, crypto_info_path: str = "./Database/"):
+        self.crypto_info_path = '%s%s' % (crypto_info_path, 'crypto_info.json')
         self.coin_name = coin_name
         self.token = self.get_token()
+        self.current_date = datetime.datetime.now(timezone('Asia/Seoul'))
+    
+    def __call__(self):
+        self.save_data()
     
     def get_token(self) -> str:
         if not os.path.isfile(self.crypto_info_path):
@@ -63,7 +70,7 @@ class UpbitPrice:
         resp = requests.get(url, params = payload)
         price_info = {
             "token": resp.json()[0]['market'],
-            "trade_date_kst": resp.json()[0]['trade_date_kst'],
+            "trade_date_kst": str(parse(resp.json()[0]['trade_date_kst']).date()),
             "trade_time_kst": resp.json()[0]['trade_time_kst'],
             "opening_price": resp.json()[0]['opening_price'],
             "high_price": resp.json()[0]['high_price'],
@@ -97,6 +104,29 @@ class UpbitPrice:
 
         return event_info
     
+    def save_data(self) -> None:
+        data = self.get_prices()
+        data.update(self.get_market_events())
+        data = [data] ### dictionary로 구성된 리스트
+
+        file_path = f"./Database/{self.coin_name}_price_data.json"
+        if not os.path.isfile(file_path):
+            with open(file_path, "w", encoding = 'utf-8-sig') as f:
+                json.dump(data, f, ensure_ascii = False, indent = 4, sort_keys = True)
+        else:
+            with open(file_path, "r", encoding = 'utf-8-sig') as f:
+                cur_data = json.load(f)
+            
+            data += cur_data
+
+            months_3_before = self.current_date - datetime.timedelta(days = 90)
+            ### 끝에서부터 3개월 전 날짜에 해당하는 데이터들 삭제
+            while(data[-1]['trade_date_kst'] == str(months_3_before.date())):
+                data.pop()
+            
+            with open(file_path, "w", encoding = 'utf-8-sig') as f:
+                json.dump(data, f, ensure_ascii = False, indent = 4, sort_keys = True)
+    
     ### 새로운 코인이 추가되었는지 저장된 리스트와 비교 후 추가
     def check_new_crypto(self) -> None:
         url = "https://api.upbit.com/v1/market/all"
@@ -118,6 +148,11 @@ class UpbitPrice:
         if new_crypto_info != cur_crypto_info:
             with open(self.crypto_info_path, 'w', encoding = 'utf-8-sig') as f:
                 json.dump(new_crypto_info, f, ensure_ascii = False)
-            print("New Crypto List Info Saved")
+            print("\nNew Crypto List Info Saved")
         else:
-            print("No Change in Crypto List Info")
+            print("\nNo Change in Crypto List Info")
+
+if __name__ == "__main__":
+    upbit = UpbitPrice(coin_name = "Bitcoin")
+    upbit()
+    print("Done")
