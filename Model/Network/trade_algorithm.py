@@ -5,13 +5,13 @@ class TradeStrategy:
             'test': self.test_strategy
         }
 
-    def __call__(self, data) -> str:
+    def __call__(self, data: dict) -> str:
         output = self.strategies[self.algorithm](data)
         return output
 
-    def test_strategy(self, data) -> list:
+    def test_strategy(self, data: dict) -> list:
         ### 매수 or 매도할 비중, 전략에 따라 분할매수 할 수 있기 때문에 반환값 일관성 목적으로 설정
-        balance_portion = 1
+        balance_portion = 1.0
 
         ### data = {prices, events, krw_balance, token_balance}
         ### KRW 주문 가능 (최소주문금액 5000원) + 하락하면 매수
