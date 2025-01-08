@@ -1,0 +1,52 @@
+version: '3.9'
+services:
+  trader:
+    tty: true
+    image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
+    container_name: python_trade
+    shm_size: '24gb'
+    command: /bin/sh -c "pip install transformers PyJWT python-dateutil mysql-connector-python && /bin/bash"
+    volumes:
+    - project_repo:/workspace
+    - /mnt/d/Python_Source/Crypto_Trading:/workspace
+    ports:
+    - 8080:80
+    networks:
+    - my_network
+    environment:
+    - UPBIT_OPEN_API_ACCESS_KEY=${UPBIT_OPEN_API_ACCESS_KEY}
+    - UPBIT_OPEN_API_SECRET_KEY=${UPBIT_OPEN_API_SECRET_KEY}
+    - MYSQL_DATABASE=${MYSQL_DATABASE}
+    - MYSQL_USER=${MYSQL_USER}
+    - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    depends_on:
+    - mysqldb
+    deploy:
+      resources:
+        reservations:
+            devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  
+  mysqldb:
+    image: mysql:latest
+    container_name: mysql_db
+    volumes:
+    - project_repo:/workspace
+    ports:
+    - 3306:3306
+    networks:
+    - my_network
+    environment:
+    - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    - MYSQL_DATABASE=${MYSQL_DATABASE}
+    - MYSQL_USER=${MYSQL_USER}
+    - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+
+volumes:
+  project_repo:
+
+networks:
+  my_network:
+    driver: bridge
