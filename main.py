@@ -1,20 +1,15 @@
-import os
-import keys
 from Trade.trade import Trader
 
-### DB 로드와 같은 작업 수행
-### Database 폴더가 없으면 생성
+### Pytorch 컨테이너 사용
+### pip install transformers PyJWT python-dateutil mysql-connector-python
 
 def main(*token):
-    os.environ["UPBIT_OPEN_API_ACCESS_KEY"] = keys.UPBIT_ACCESS_KEY
-    os.environ["UPBIT_OPEN_API_SECRET_KEY"] = keys.UPBIT_SECRET_KEY
-
     if len(token) == 1:
         single_token_trade(token)
     else:
         multi_token_trade(token)
 
-def single_token_trade(token): 
+def single_token_trade(token):
     trader = Trader(token[0])
     trader.start_trading()
 

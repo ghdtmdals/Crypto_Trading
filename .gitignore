@@ -1,10 +1,8 @@
 test.ipynb
-
 keys.py
+.env
 
 ETC/
-
-Database/
 
 __pycache__/
 Data/__pycache__/

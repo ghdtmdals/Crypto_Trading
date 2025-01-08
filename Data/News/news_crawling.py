@@ -12,6 +12,7 @@ from Data.News.sentiment_analysis import Sentiment
 class NewsCrawling:
     def __init__(self):
         self.coin_name = None
+        self.token = None
 
         self.source = None
         self.params = None
@@ -19,7 +20,7 @@ class NewsCrawling:
         
         self.current_date = None
 
-    def __get_news_data(self, title_block_tag: str, title_block_class_name: str, title_tag: str, \
+    def get_news_data(self, title_block_tag: str, title_block_class_name: str, title_tag: str, \
                   title_class_name: str, date_tag: str, date_class_name: str) -> list:
         sentiment_analyzer = Sentiment()
 
@@ -33,17 +34,11 @@ class NewsCrawling:
             temp_data = {}
             title = self.__get_title(news, title_tag, title_class_name)
             date = self.__get_date(news, date_tag, date_class_name)
-            temp_data['date'] = str(date.date())
-            temp_data['title'] = title
-            temp_data['sentiment'] = self.__run_sentiment(sentiment_analyzer, title)
-            news_data.append(temp_data)
-            # if date.date() == self.current_date.date():
-            #     temp_data['date'] = str(date.date())
-            #     temp_data['title'] = title
-            #     temp_data['sentiment'] = self.run_sentiment(sentiment_analyzer, title)
-            #     news_data.append(temp_data)
-            # else: ### 최신순으로 출력됨
-            #     break
+            if date.date() == self.current_date.date():
+                temp_data = (self.token, str(date.date()), self.source, title, self.__run_sentiment(sentiment_analyzer, title))
+                news_data.append(temp_data)
+            else: ### 최신순으로 출력됨
+                break
         
         return news_data
 
