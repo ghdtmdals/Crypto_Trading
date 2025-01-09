@@ -34,6 +34,8 @@ class NewsCrawling:
             temp_data = {}
             title = self.__get_title(news, title_tag, title_class_name)
             date = self.__get_date(news, date_tag, date_class_name)
+            # temp_data = (self.token, str(date.date()), self.source, title, self.__run_sentiment(sentiment_analyzer, title))
+            # news_data.append(temp_data)
             if date.date() == self.current_date.date():
                 temp_data = (self.token, str(date.date()), self.source, title, self.__run_sentiment(sentiment_analyzer, title))
                 news_data.append(temp_data)
@@ -65,24 +67,3 @@ class NewsCrawling:
             return "Neutral"
         else:
             return "Positive"
-
-    def save_data(self, title_block_tag: str, title_block_class_name: str, title_tag: str, \
-                  title_class_name: str, date_tag: str, date_class_name: str) -> None:
-        data = self.__get_news_data(title_block_tag, title_block_class_name, title_tag, title_class_name, date_tag, date_class_name)
-        file_path = f"./Database/{self.coin_name}_{self.source}.json"
-        if not os.path.isfile(file_path):
-            with open(file_path, "w", encoding = 'utf-8-sig') as f:
-                json.dump(data, f, ensure_ascii = False, indent = 4, sort_keys = True)
-        else:
-            with open(file_path, "r", encoding = 'utf-8-sig') as f:
-                cur_data = json.load(f)
-            
-            data += cur_data
-
-            months_3_before = self.current_date - datetime.timedelta(days = 90)
-            ### 끝에서부터 3개월 전 날짜에 해당하는 데이터들 삭제
-            while(data[-1]['date'] == str(months_3_before.date())):
-                data.pop()
-            
-            with open(file_path, "w", encoding = 'utf-8-sig') as f:
-                json.dump(data, f, ensure_ascii = False, indent = 4, sort_keys = True)
