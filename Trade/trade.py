@@ -24,7 +24,7 @@ class Trader:
 
     ### 토큰의 밸런스를 가져오기 위해 토큰이 몇 번째 인덱스인지 찾음
     ### token = "KRW-BTC" -> currency = "BTC"
-    def find_token(self, balance_info: list, currency: str) -> int:
+    def find_token_index(self, balance_info: list, currency: str) -> int:
         for i in range(len(balance_info)):
             if balance_info[i]['currency'] == currency:
                 return i
@@ -47,8 +47,8 @@ class Trader:
         resp = requests.get(url, headers=headers)
         balance_info = resp.json()
 
-        krw_index = self.find_token(balance_info, "KRW")
-        token_index = self.find_token(balance_info, self.token.split("-")[1]) ### KRW-BTC -> [KRW, -, BTC] -> BTC
+        krw_index = self.find_token_index(balance_info, "KRW")
+        token_index = self.find_token_index(balance_info, self.token.split("-")[1]) ### KRW-BTC -> [KRW, -, BTC] -> BTC
 
         if token_index == -1: ### 아직 구매한 코인이 없으면 -1
             balance = {"krw_balance": float(balance_info[krw_index]['balance']),
@@ -126,10 +126,7 @@ class Trader:
         start_time = datetime.datetime.now(timezone('Asia/Seoul'))
         tomorrow = start_time.date() + datetime.timedelta(days = 1)
 
-        
         print(f"Start Trading | Current Time {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
-        ### 시작할때 뉴스 데이터 한 번 수집
-        crypto_db.save_news_data()
         while True:
             current_time = datetime.datetime.now(timezone('Asia/Seoul'))
             ### Data 수집
@@ -137,7 +134,7 @@ class Trader:
             crypto_db.save_price_data()
             
             ### 데이터 호출
-            data = crypto_db.load_data(sentiment_days = 1)
+            data = crypto_db.load_data(sentiment_days = 1, sentiment_type = 'all')
 
             ### balance 호출
             balance = self.get_current_balance()
@@ -152,7 +149,7 @@ class Trader:
             crypto_db.save_log_data(current_time, balance, trade_call, result)
 
             ### 일정 시점마다 새로운 token 추가 여부 확인 (하루) + 뉴스 데이터 수집
-            if current_time.date() == tomorrow and current_time.hour == 9:
+            if current_time.date() == tomorrow and current_time.hour == 13:
                 tomorrow = current_time.date() + datetime.timedelta(days = 1)
                 crypto_db.collect_crypto_info()
                 crypto_db.get_news_data()
