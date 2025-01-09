@@ -23,6 +23,8 @@ class CryptoDB:
         self.token = self.get_token()
 
         self.upbit = UpbitPrice(token = self.token)
+
+        ### Add New Sources
         self.news = [CoinPedia(self.coin_name, self.token), CoinPress(self.coin_name, self.token)]
     
     def __del__(self):
@@ -30,20 +32,50 @@ class CryptoDB:
         self.conn.close()
 
     ### DB 테이블 생성
-    def create_tables(self):
+    def create_tables(self) -> None:
         with open("./Database/create_tables.sql", "r") as f:
             sql = f.read()
         self.cursor.execute(sql)
         self.conn.reconnect()
     
-    def get_token(self):
+    def get_token(self) -> str:
         query = f"SELECT token FROM Crypto_Info WHERE english_name = '{self.coin_name}'"
         self.cursor.execute(query)
         result = self.cursor.fetchall()
         return result[0]['token'] ### [(token, )]
 
+    ### DB에서 COLUMN 별 데이터 타입 받은 다음에 길이 비교
+    ### DECIMAL, VARCHAR만 확인하면 됨
+    ### input_data: List[tuple] || tuple
+    def check_data_type(self, input_data, table_name: str) -> None:
+        query = "SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE " \
+                + f"FROM information_schema.COLUMNS WHERE 1=1 AND TABLE_NAME = '{table_name}' ORDER BY ORDINAL_POSITION;"
+        self.cursor.execute(query)
+        data_table = self.cursor.fetchall()
+
+        if type(input_data) is not list:
+            input_data = [input_data]
+
+        ### varchar 타입 COLUMN과 decimal 타입 COLUMN 탐색
+        ### List 데이터일 경우 특정 컬럼의 최대값을 찾은 다음에 해당 값을 기준으로 판단하는 것 보다
+        ### 매번 데이터를 확인하면서 데이터가 입력 가능한 길이를 초과하는지 확인 -> 어차피 최대값 찾는것도 모든 데이터를 한 번은 훑어야 함
+        for data in input_data:
+            for i in range(len(data_table)):
+                if data_table[i]['DATA_TYPE'] == 'varchar':
+                    if len(data[i]) + 1 > data_table[i]['CHARACTER_MAXIMUM_LENGTH']:
+                        length = len(data[i]) + 1
+                        query = f"ALTER TABLE {table_name} MODIFY COLUMN {data_table[i]['COLUMN_NAME']} VARCHAR({length})"
+                        self.cursor.execute(query)
+                    
+                elif data_table[i]['DATA_TYPE'] == 'decimal':
+                    temp_float = str(round(data[i], data_table[i]['NUMERIC_SCALE']))
+                    if len(temp_float) > data_table[i]['NUMERIC_PRECISION']:
+                        length = len(temp_float) + 1
+                        query = f"ALTER TABLE {table_name} MODIFY COLUMN {data_table[i]['COLUMN_NAME']} DECIMAL({length}, {data_table[i]['NUMERIC_SCALE']})"
+                        self.cursor.execute(query)
+    
     ### 일정 주기로 호출되도록 설정
-    def collect_crypto_info(self):
+    def collect_crypto_info(self) -> None:
         print("Checking for Newly Listed Crypto Information")
         url = "https://api.upbit.com/v1/market/all"
         resp = requests.get(url)
@@ -54,13 +86,17 @@ class CryptoDB:
         for crypto in resp.json():
             if crypto["market"].startswith("KRW"):
                 crypto_info.append((crypto['market'], crypto['english_name'], crypto['korean_name']))
+
+        self.check_data_type(crypto_info, 'Crypto_Info')
         
         query = "INSERT IGNORE INTO Crypto_Info (token, english_name, korean_name) VALUES (%s, %s, %s);"
         self.cursor.executemany(query, crypto_info)
         self.conn.commit()
 
-    def save_price_data(self):
+    def save_price_data(self) -> None:
         data = self.upbit()
+        self.check_data_type(data, 'Upbit')
+
         query = "INSERT INTO Upbit (" \
                 + "token, trade_date_kst, trade_time_kst, high_price, low_price, opening_price, trade_price, signed_change_rate, " \
                 + "warning, deposit_amount_soaring, global_price_differences, price_fluctuations, " \
@@ -69,17 +105,20 @@ class CryptoDB:
         self.cursor.execute(query, data)
         self.conn.commit()
 
-    def save_news_data(self):
+    def save_news_data(self) -> None:
         for news in self.news:
             print(f"Collecting {news.coin_name} News Data From {news.source}")
             data = news()
+            self.check_data_type(data, 'News')
+
             query = "INSERT IGNORE INTO News (token, news_date, news_source, title, sentiment) VALUES (%s, %s, %s, %s, %s)"
             self.cursor.executemany(query, data)
             self.conn.commit()
     
-    def save_log_data(self, *data):
+    def save_log_data(self, *data) -> None:
         log = (self.token, str(data[0].date()), str(data[0].time()), 
                data[1]['krw_balance'], data[1]['token_balance'], data[2], json.dumps(data[3]))
+        self.check_data_type(log, 'Trade_Log')
 
         query = "INSERT INTO Trade_Log (" \
                 + "token, trade_date, trade_time, krw_balance, token_balance, trade_call, trade_result" \
@@ -88,29 +127,23 @@ class CryptoDB:
         self.cursor.execute(query, log)
         self.conn.commit()
 
-    def load_data(self, sentiment_days = 1):
-        query = "CREATE TEMPORARY TABLE Temp_Sentiment (" \
-                + "SELECT token, AVG(sentiment) AS sentiment " \
+    def load_data(self, sentiment_days: int = 1, sentiment_type: str = 'all') -> dict:
+        sentiment_types = {'all': 'SENTIMENT_RATIO',
+                           'pos_neg': 'POS_NEG_RATIO',
+                           'avg': 'AVG_SENTIMENT'}
+        query = "SELECT * " \
                 + "FROM " \
-                + "(SELECT token, news_date, " \
-                + "CASE " \
-                + "WHEN sentiment = 'Negative' THEN 0 " \
-                + "WHEN sentiment = 'Neutral' THEN 1 " \
-                + "WHEN sentiment = 'Positive' THEN 2 " \
-                + "END AS Sentiment " \
-                + "FROM `News`) N " \
-                + f"WHERE news_date >= DATE_SUB(DATE(NOW()), INTERVAL {sentiment_days} DAY) " \
-                + "GROUP BY token);"
+                + f"(SELECT token, {sentiment_types[sentiment_type]}({sentiment_days}) AS sentiment " \
+                + "FROM News " \
+                + "ORDER BY news_date DESC " \
+                + "LIMIT 1) S " \
+                + "INNER JOIN Upbit U ON S.token = U.token " \
+                + f"WHERE S.token = '{self.token}' " \
+                + "ORDER BY U.trade_date_kst DESC, U.trade_time_kst DESC " \
+                + "LIMIT 1;"
         
         self.cursor.execute(query)
-        query = "SELECT * FROM Temp_Sentiment S LEFT JOIN Upbit U ON S.token = U.token " \
-                + "WHERE U.trade_date_kst = DATE(NOW()) ORDER BY U.trade_date_kst DESC, U.trade_time_kst DESC LIMIT 1;"
-        self.cursor.execute(query)
         result = self.cursor.fetchall()[0]
-
-        ### 사용 후 삭제해야 중복 생성 에러 발생하지 않음
-        query = "DROP TEMPORARY TABLE Temp_Sentiment;"
-        self.cursor.execute(query)
 
         ### MySQL 데이터 타입 -> Python 데이터 타입
         result['sentiment'] = float(result['sentiment'])
