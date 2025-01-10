@@ -1,11 +1,10 @@
-version: '3.9'
 services:
   trader:
     tty: true
     image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
     container_name: python_trade
     shm_size: '24gb'
-    command: /bin/sh -c "pip install transformers PyJWT python-dateutil mysql-connector-python && /bin/bash"
+    command: /bin/sh -c "pip install transformers PyJWT python-dateutil mysql-connector-python matplotlib && /bin/bash"
     volumes:
     - project_repo:/workspace
     - /mnt/d/Python_Source/Crypto_Trading:/workspace

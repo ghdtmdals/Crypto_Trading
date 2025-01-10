@@ -1,9 +1,5 @@
-import os
-import sys
 from typing import List
-
 import requests
-import json
 import datetime
 from dateutil.parser import parse
 from pytz import timezone
@@ -64,26 +60,26 @@ class UpbitPrice:
 
         return event_info
     
-    def __save_data(self) -> None:
-        data = self.__get_prices()
-        data.update(self.__get_market_events())
-        data = [data] ### dictionary로 구성된 리스트
+    # def __save_data(self) -> None:
+    #     data = self.__get_prices()
+    #     data.update(self.__get_market_events())
+    #     data = [data] ### dictionary로 구성된 리스트
 
-        file_path = f"./Database/{self.coin_name}_price_data.json"
-        if not os.path.isfile(file_path):
-            with open(file_path, "w", encoding = 'utf-8-sig') as f:
-                json.dump(data, f, ensure_ascii = False, indent = 4, sort_keys = True)
-        else:
-            with open(file_path, "r", encoding = 'utf-8-sig') as f:
-                cur_data = json.load(f)
+    #     file_path = f"./Database/{self.coin_name}_price_data.json"
+    #     if not os.path.isfile(file_path):
+    #         with open(file_path, "w", encoding = 'utf-8-sig') as f:
+    #             json.dump(data, f, ensure_ascii = False, indent = 4, sort_keys = True)
+    #     else:
+    #         with open(file_path, "r", encoding = 'utf-8-sig') as f:
+    #             cur_data = json.load(f)
             
-            data += cur_data
+    #         data += cur_data
 
-            months_3_before = self.current_date - datetime.timedelta(days = 90)
-            ### 끝에서부터 3개월 전 날짜에 해당하는 데이터들 삭제
-            while(data[-1]['trade_date_kst'] == str(months_3_before.date())):
-                data.pop()
+    #         months_3_before = self.current_date - datetime.timedelta(days = 90)
+    #         ### 끝에서부터 3개월 전 날짜에 해당하는 데이터들 삭제
+    #         while(data[-1]['trade_date_kst'] == str(months_3_before.date())):
+    #             data.pop()
             
-            with open(file_path, "w", encoding = 'utf-8-sig') as f:
-                json.dump(data, f, ensure_ascii = False, indent = 4, sort_keys = True)
+    #         with open(file_path, "w", encoding = 'utf-8-sig') as f:
+    #             json.dump(data, f, ensure_ascii = False, indent = 4, sort_keys = True)
     
