@@ -56,12 +56,15 @@ class CryptoDB:
         if type(input_data) is not list:
             input_data = [input_data]
 
+        ### INT 자료형은 범위를 벗어나지 않는 한 조절할 필요 없음
+        ### 나머지 자료형도 범위를 조절할 필요는 없음
         ### varchar 타입 COLUMN과 decimal 타입 COLUMN 탐색
         ### List 데이터일 경우 특정 컬럼의 최대값을 찾은 다음에 해당 값을 기준으로 판단하는 것 보다
         ### 매번 데이터를 확인하면서 데이터가 입력 가능한 길이를 초과하는지 확인 -> 어차피 최대값 찾는것도 모든 데이터를 한 번은 훑어야 함
         for data in input_data:
             for i in range(len(data_table)):
                 if data_table[i]['DATA_TYPE'] == 'varchar':
+                    ### 입력할 텍스트 길이 + 1이 제한 길이보다 길 경우 제한 길이를 입력할 텍스트 길이 + 1로 변경
                     if len(data[i]) + 1 > data_table[i]['CHARACTER_MAXIMUM_LENGTH']:
                         length = len(data[i]) + 1
                         query = f"ALTER TABLE {table_name} MODIFY COLUMN {data_table[i]['COLUMN_NAME']} VARCHAR({length})"
@@ -69,6 +72,7 @@ class CryptoDB:
                     
                 elif data_table[i]['DATA_TYPE'] == 'decimal':
                     temp_float = str(round(data[i], data_table[i]['NUMERIC_SCALE']))
+                    ### 소수점 포함 숫자 자릿수가 제한 자릿수보다 클 경우 변경
                     if len(temp_float) > data_table[i]['NUMERIC_PRECISION']:
                         length = len(temp_float) + 1
                         query = f"ALTER TABLE {table_name} MODIFY COLUMN {data_table[i]['COLUMN_NAME']} DECIMAL({length}, {data_table[i]['NUMERIC_SCALE']})"

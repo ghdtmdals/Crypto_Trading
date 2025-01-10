@@ -135,6 +135,3 @@ BEGIN
 END //
 
 DELIMITER ;
-
-SELECT *
-FROM `Crypto_Info`;
