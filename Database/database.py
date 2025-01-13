@@ -1,21 +1,24 @@
 import os
-import mysql.connector
+import pymysql
+from pymysql.constants import CLIENT
 import json
 
 import requests
 from Data.Upbit.upbit_data import UpbitPrice
+from Data.Upbit.upbit_candle_data import UpbitCandle
 from Data.News.coinpedia import CoinPedia
 from Data.News.coinpress import CoinPress
 
 class CryptoDB:
     def __init__(self, coin_name):
-        self.conn = mysql.connector.connect(
+        self.conn = pymysql.connect(
                         host = 'mysqldb',
                         user = os.environ['MYSQL_USER'],
                         password = os.environ['MYSQL_PASSWORD'],
-                        database = os.environ['MYSQL_DATABASE']
+                        database = os.environ['MYSQL_DATABASE'],
+                        client_flag = CLIENT.MULTI_STATEMENTS
                     )
-        self.cursor = self.conn.cursor(dictionary = True)
+        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
         self.create_tables()
         self.collect_crypto_info()
 
@@ -23,6 +26,7 @@ class CryptoDB:
         self.token = self.get_token()
 
         self.upbit = UpbitPrice(token = self.token)
+        self.upbit_candle = UpbitCandle(token = self.token, days = 90, price_type = 'high_price')
 
         ### Add New Sources
         self.news = [CoinPedia(self.coin_name, self.token), CoinPress(self.coin_name, self.token)]
@@ -35,8 +39,16 @@ class CryptoDB:
     def create_tables(self) -> None:
         with open("./Database/create_tables.sql", "r") as f:
             sql = f.read()
-        self.cursor.execute(sql, multi = True)
-        self.conn.reconnect()
+        self.cursor.execute(sql)
+
+        with open("./Database/create_schedulers.sql", "r") as f:
+            sql = f.read()
+        self.cursor.execute(sql)
+
+        with open("./Database/create_functions.sql", "r") as f:
+            sql = f.read()
+        sql = sql.replace("\n", " ").replace("\t", "")
+        self.cursor.execute(sql)
     
     def get_token(self) -> str:
         query = f"SELECT token FROM Crypto_Info WHERE english_name = '{self.coin_name}'"
@@ -49,7 +61,7 @@ class CryptoDB:
     ### input_data: List[tuple] || tuple
     def check_data_type(self, input_data, table_name: str) -> None:
         query = "SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE " \
-                + f"FROM information_schema.COLUMNS WHERE 1=1 AND TABLE_NAME = '{table_name}' ORDER BY ORDINAL_POSITION;"
+                + f"FROM information_schema.COLUMNS WHERE 1=1 AND TABLE_NAME = '{table_name} AND COLUMN_NAME IS NOT id' ORDER BY ORDINAL_POSITION;"
         self.cursor.execute(query)
         data_table = self.cursor.fetchall()
 
@@ -109,15 +121,19 @@ class CryptoDB:
         self.cursor.execute(query, data)
         self.conn.commit()
 
-    def save_news_data(self) -> None:
+    def save_daily_data(self) -> None:
         for news in self.news:
             print(f"Collecting {news.coin_name} News Data From {news.source}")
             data = news()
             self.check_data_type(data, 'News')
 
-            query = "INSERT IGNORE INTO News (token, news_date, news_source, title, sentiment) VALUES (%s, %s, %s, %s, %s)"
+            ### check for duplicate
+
+            query = "INSERT INTO News (token, news_date, news_source, title, sentiment) VALUES (%s, %s, %s, %s, %s)"
             self.cursor.executemany(query, data)
             self.conn.commit()
+        
+        self.upbit_candle.save_chart_image()
     
     def save_log_data(self, *data) -> None:
         log = (self.token, str(data[0].date()), str(data[0].time()), 
@@ -165,4 +181,7 @@ class CryptoDB:
         result['trading_volume_soaring'] = bool(result['trading_volume_soaring'])
         result['concentration_of_small_accounts'] = bool(result['concentration_of_small_accounts'])
 
-        return result
+        ### 장기간 데이터 수집 시 차트 데이터의 일관성을 확보하기 위해 현재 모듈에서 파라미터 값을 고정
+        image_data = self.upbit_candle()
+
+        return result, image_data
