@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS Crypto_Info (
 );
 
 CREATE TABLE IF NOT EXISTS News (
+	`id` INT PRIMARY KEY AUTO_INCREMENT,
 	`token` VARCHAR(30) NOT NULL,
 	news_date DATE NOT NULL,
 	news_source VARCHAR(10) NOT NULL,
@@ -42,96 +43,3 @@ CREATE TABLE IF NOT EXISTS Upbit (
 	concentration_of_small_accounts TINYINT(1) NOT NULL,
 	CONSTRAINT Upbit_FK FOREIGN KEY(`token`) REFERENCES Crypto_Info(`token`)
 );
-
--- SHOW VARIABLES LIKE 'event%'; -- event_scheduler: ON 확인
-
--- SELECT * FROM information_schema.EVENTS; -- event_scheduler 리스트 확인
-
--- 90일 지난 데이터는 자동 삭제되도록 설정
-CREATE EVENT IF NOT EXISTS DEL_NEWS_OVER_90DAYS
-ON SCHEDULE EVERY 1 DAY
-COMMENT "Delete News Records Over 90 Days"
-DO
-DELETE FROM News WHERE news_date <= DATE_SUB(CURDATE(), INTERVAL 90 DAY);
-
-CREATE EVENT IF NOT EXISTS DEL_LOGS_OVER_90DAYS
-ON SCHEDULE EVERY 1 DAY
-COMMENT "Delete Log Records Over 90 Days"
-DO
-DELETE FROM Trade_Log WHERE trade_date <= DATE_SUB(CURDATE(), INTERVAL 90 DAY);
-
-CREATE EVENT IF NOT EXISTS DEL_UPBIT_PRICES_OVER_90DAYS
-ON SCHEDULE EVERY 1 DAY
-COMMENT "Delete Upbit Price Records Over 90 Days"
-DO
-DELETE FROM Upbit WHERE trade_date_kst <= DATE_SUB(CURDATE(), INTERVAL 90 DAY);
-
--- Sentiment 함수
--- 정의 불가 시 mysql root 계정 접근 후
--- set global log_bin_trust_function_creators=on;
--- 완료 후
--- set global log_bin_trust_function_creators=off;
-DELIMITER //
-
-CREATE FUNCTION IF NOT EXISTS AVG_SENTIMENT(sentiment_days INT)
-RETURNS DECIMAL(4, 3)
-DETERMINISTIC
-BEGIN
-	DECLARE sentiment_value DECIMAL(4, 3);
-
-	SELECT AVG(sent_val) INTO sentiment_value
-	FROM
-	(SELECT CASE
-	WHEN sentiment = "Positive" THEN 1
-	WHEN sentiment = "Neutral" THEN 0
-	WHEN sentiment = "Negative" THEN -1
-	END AS sent_val
-	FROM News
-	WHERE news_date >= DATE_SUB(CURDATE(), INTERVAL sentiment_days DAY)) N;
-
-	RETURN sentiment_value;
-END //
-
-CREATE FUNCTION IF NOT EXISTS POS_NEG_RATIO(sentiment_days INT)
-RETURNS DECIMAL(4, 3)
-DETERMINISTIC
-BEGIN
-    DECLARE pos_count INT;
-    DECLARE neg_count INT;
-    DECLARE sentiment_value DECIMAL(4, 3);
-
-	SELECT COUNT(sentiment) INTO pos_count FROM News WHERE sentiment = "Positive" AND news_date >= DATE_SUB(CURDATE(), INTERVAL sentiment_days DAY);
-	SELECT COUNT(sentiment) INTO neg_count FROM News WHERE sentiment = "Negative" AND news_date >= DATE_SUB(CURDATE(), INTERVAL sentiment_days DAY);
-
-    IF (pos_count + neg_count) = 0 THEN
-        RETURN 0;
-    END IF;
-
-    SET sentiment_value = (pos_count - neg_count) / (pos_count + neg_count);
-    RETURN sentiment_value;
-END //
-
-CREATE FUNCTION IF NOT EXISTS SENTIMENT_RATIO(sentiment_days INT)
-RETURNS DECIMAL(4, 3)
-DETERMINISTIC
-BEGIN
-	DECLARE neutral_count INT;
-	DECLARE neutral_ratio DECIMAL(4, 3);
-	DECLARE pos_neg_ratio DECIMAL(4, 3);
-	DECLARE sentiment_value DECIMAL(4, 3);
-
-	SELECT COUNT(sentiment) INTO neutral_count FROM News WHERE sentiment = "Neutral" AND news_date >= DATE_SUB(CURDATE(), INTERVAL sentiment_days DAY);
-
-	IF neutral_count = 0 THEN 
-		SET neutral_ratio = 0;
-	ELSE
-		SELECT neutral_count / COUNT(sentiment) INTO neutral_ratio FROM News WHERE news_date >= DATE_SUB(CURDATE(), INTERVAL sentiment_days DAY);
-	END IF;
-
-	SELECT POS_NEG_RATIO(sentiment_days) INTO pos_neg_ratio;
-
-	SET sentiment_value = pos_neg_ratio * (1 - neutral_ratio);
-	RETURN sentiment_value;
-END //
-
-DELIMITER ;
