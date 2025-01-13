@@ -35,7 +35,7 @@ class CryptoDB:
     def create_tables(self) -> None:
         with open("./Database/create_tables.sql", "r") as f:
             sql = f.read()
-        self.cursor.execute(sql)
+        self.cursor.execute(sql, multi = True)
         self.conn.reconnect()
     
     def get_token(self) -> str:

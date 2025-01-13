@@ -11,6 +11,7 @@ import datetime
 from pytz import timezone
 import json
 
+from Data.Upbit.upbit_candle_data import UpbitCandle
 from Database.database import CryptoDB
 from Model.Network.trade_algorithm import TradeStrategy
 
@@ -119,6 +120,7 @@ class Trader:
         print("Loading Modules...")
         crypto_db = CryptoDB(coin_name = self.coin_name)
         self.token = crypto_db.token
+        chart_image_caller = UpbitCandle(self.token)
         
         ### 트레이딩 모듈 초기화
         trader = TradeStrategy(algorithm = "test")
@@ -126,6 +128,8 @@ class Trader:
         start_time = datetime.datetime.now(timezone('Asia/Seoul'))
         tomorrow = start_time.date() + datetime.timedelta(days = 1)
 
+        ### 시작 시점에 차트 데이터 수집 및 텐서 변환
+        chart_image_data = chart_image_caller(days = 90, price_type = 'high_price')
         print(f"Start Trading | Current Time {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
         while True:
             current_time = datetime.datetime.now(timezone('Asia/Seoul'))
@@ -148,11 +152,12 @@ class Trader:
             ### 로그 데이터 저장
             crypto_db.save_log_data(current_time, balance, trade_call, result)
 
-            ### 일정 시점마다 새로운 token 추가 여부 확인 (하루) + 뉴스 데이터 수집
+            ### 일정 시점마다 새로운 token 추가 여부 확인 (하루) + 뉴스 데이터 수집 + 차트 이미지 갱신
             if current_time.date() == tomorrow and current_time.hour == 13:
                 tomorrow = current_time.date() + datetime.timedelta(days = 1)
                 crypto_db.collect_crypto_info()
                 crypto_db.get_news_data()
+                chart_image_data = chart_image_caller(days = chart_image_caller.days, price_type = chart_image_caller.price_type)
 
             print(f"Current Time: {current_time.strftime('%Y-%m-%d %H:%M:%S')} | " \
                   + f"Current KRW Balance: {round(balance['krw_balance'], 3)} | " \
