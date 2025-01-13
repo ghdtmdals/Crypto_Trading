@@ -3,6 +3,7 @@ keys.py
 .env
 
 ETC/
+Database/chart_images/
 
 __pycache__/
 Data/__pycache__/
