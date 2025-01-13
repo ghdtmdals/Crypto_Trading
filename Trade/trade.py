@@ -120,7 +120,6 @@ class Trader:
         print("Loading Modules...")
         crypto_db = CryptoDB(coin_name = self.coin_name)
         self.token = crypto_db.token
-        chart_image_caller = UpbitCandle(self.token)
         
         ### 트레이딩 모듈 초기화
         trader = TradeStrategy(algorithm = "test")
@@ -128,8 +127,8 @@ class Trader:
         start_time = datetime.datetime.now(timezone('Asia/Seoul'))
         tomorrow = start_time.date() + datetime.timedelta(days = 1)
 
-        ### 시작 시점에 차트 데이터 수집 및 텐서 변환
-        chart_image_data = chart_image_caller(days = 90, price_type = 'high_price')
+        ### 시작 시점에 차트 및 뉴스 데이터 수집
+        crypto_db.save_daily_data()
         print(f"Start Trading | Current Time {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
         while True:
             current_time = datetime.datetime.now(timezone('Asia/Seoul'))
@@ -138,7 +137,7 @@ class Trader:
             crypto_db.save_price_data()
             
             ### 데이터 호출
-            data = crypto_db.load_data(sentiment_days = 1, sentiment_type = 'all')
+            data, image_data = crypto_db.load_data(sentiment_days = 1, sentiment_type = 'all')
 
             ### balance 호출
             balance = self.get_current_balance()
@@ -156,8 +155,7 @@ class Trader:
             if current_time.date() == tomorrow and current_time.hour == 13:
                 tomorrow = current_time.date() + datetime.timedelta(days = 1)
                 crypto_db.collect_crypto_info()
-                crypto_db.get_news_data()
-                chart_image_data = chart_image_caller(days = chart_image_caller.days, price_type = chart_image_caller.price_type)
+                crypto_db.save_daily_data()
 
             print(f"Current Time: {current_time.strftime('%Y-%m-%d %H:%M:%S')} | " \
                   + f"Current KRW Balance: {round(balance['krw_balance'], 3)} | " \
