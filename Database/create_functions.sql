@@ -4,7 +4,7 @@
 -- 완료 후
 -- set global log_bin_trust_function_creators=off;
 
-DELIMITER $$
+-- DELIMITER $$
 
 CREATE FUNCTION IF NOT EXISTS AVG_SENTIMENT(sentiment_days INT)
 	RETURNS DECIMAL(4, 3)
@@ -23,7 +23,7 @@ BEGIN
 	WHERE news_date >= DATE_SUB(CURDATE(), INTERVAL sentiment_days DAY)) N;
 
 	RETURN sentiment_value;
-END $$
+END;
 
 CREATE FUNCTION IF NOT EXISTS POS_NEG_RATIO(sentiment_days INT)
 	RETURNS DECIMAL(4, 3)
@@ -42,7 +42,7 @@ BEGIN
 
     SET sentiment_value = (pos_count - neg_count) / (pos_count + neg_count);
     RETURN sentiment_value;
-END $$
+END;
 
 CREATE FUNCTION IF NOT EXISTS SENTIMENT_RATIO(sentiment_days INT)
 	RETURNS DECIMAL(4, 3)
@@ -65,6 +65,6 @@ BEGIN
 
 	SET sentiment_value = pos_neg_ratio * (1 - neutral_ratio);
 	RETURN sentiment_value;
-END $$
+END;
 
-DELIMITER ;
+-- DELIMITER ;

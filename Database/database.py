@@ -47,7 +47,6 @@ class CryptoDB:
 
         with open("./Database/create_functions.sql", "r") as f:
             sql = f.read()
-        sql = sql.replace("\n", " ").replace("\t", "")
         self.cursor.execute(sql)
     
     def get_token(self) -> str:
@@ -132,6 +131,10 @@ class CryptoDB:
             query = "INSERT INTO News (token, news_date, news_source, title, sentiment) VALUES (%s, %s, %s, %s, %s)"
             self.cursor.executemany(query, data)
             self.conn.commit()
+        
+        query = "DELETE a FROM News a, News b WHERE a.id > b.id AND a.title = b.title;"
+        self.cursor.execute(query)
+        self.conn.commit()
         
         self.upbit_candle.save_chart_image()
     
