@@ -132,6 +132,7 @@ class CryptoDB:
             self.cursor.executemany(query, data)
             self.conn.commit()
         
+        ### 중복 뉴스 삭제
         query = "DELETE a FROM News a, News b WHERE a.id > b.id AND a.title = b.title;"
         self.cursor.execute(query)
         self.conn.commit()
@@ -150,13 +151,13 @@ class CryptoDB:
         self.cursor.execute(query, log)
         self.conn.commit()
 
-    def load_data(self, sentiment_days: int = 1, sentiment_type: str = 'all') -> dict:
+    def load_data(self, sentiment_days: int = 1, sentiment_type: str = 'all', sentiment_alpha: float = 0.5) -> dict:
         sentiment_types = {'all': 'SENTIMENT_RATIO',
                            'pos_neg': 'POS_NEG_RATIO',
                            'avg': 'AVG_SENTIMENT'}
         query = "SELECT * " \
                 + "FROM " \
-                + f"(SELECT token, {sentiment_types[sentiment_type]}({sentiment_days}) AS sentiment " \
+                + f"(SELECT token, {sentiment_types[sentiment_type]}({sentiment_days}, {sentiment_alpha}) AS sentiment " \
                 + "FROM News " \
                 + "ORDER BY news_date DESC " \
                 + "LIMIT 1) S " \

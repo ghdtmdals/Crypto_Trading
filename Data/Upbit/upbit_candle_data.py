@@ -47,7 +47,7 @@ class UpbitCandle:
     
     def get_image_tensor(self) -> torch.Tensor:
         transform = transforms.Compose([
-            transforms.Resize((256, 256)),
+            transforms.Resize((224, 224)),
             transforms.ToTensor(),
             ### 채널 별 평균 및 표준편차 값 사용
             transforms.Normalize((0.9803, 0.9872, 0.9919), (0.1095, 0.0704, 0.0459))
@@ -58,7 +58,7 @@ class UpbitCandle:
         return transform(chart_image)
     
     def delete_past_chart(self):
-        past_date = datetime.datetime.now(timezone('Asia/Seoul')).date() - datetime.timedelta(days = self.days)
+        past_date = datetime.datetime.now(timezone('Asia/Seoul')).date() - datetime.timedelta(days = 90) ### 90일간 데이터만 유지
         chart_images = os.listdir(self.root)
 
         for image in chart_images:
