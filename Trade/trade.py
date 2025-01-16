@@ -11,17 +11,17 @@ import datetime
 from pytz import timezone
 import json
 
-from Data.Upbit.upbit_candle_data import UpbitCandle
 from Database.database import CryptoDB
-from Model.Network.trade_algorithm import TradeStrategy
+from Model.Network.trade_strategy import TradeStrategy, ModelTrainer
 
 class Trader:
-    def __init__(self, coin_name: str):
+    def __init__(self, coin_name: str, trade_portion: float = 1.0):
         self.__access_key = os.environ["UPBIT_OPEN_API_ACCESS_KEY"]
         self.__secret_key = os.environ["UPBIT_OPEN_API_SECRET_KEY"]
 
         self.coin_name = coin_name
         self.token = None
+        self.trade_portion = trade_portion
 
     ### 토큰의 밸런스를 가져오기 위해 토큰이 몇 번째 인덱스인지 찾음
     ### token = "KRW-BTC" -> currency = "BTC"
@@ -60,15 +60,15 @@ class Trader:
         
         return balance
     
-    def trade(self, call: str, proportion: int, balance: dict) -> dict:
+    def trade(self, call: str, balance: dict) -> dict:
         if call == "hold":
             return {"trade_result": "no trade"}
         
         if call == "bid":
-            params = self.bid(balance, proportion)
+            params = self.bid(balance)
 
         elif call == "ask":
-            params = self.ask(balance, proportion)
+            params = self.ask(balance)
 
         url = "https://api.upbit.com/v1/orders"
         
@@ -95,22 +95,22 @@ class Trader:
         resp = requests.post(url, json=params, headers=headers)
         return resp.json()
     
-    def bid(self, balance: dict, proportion: float) -> dict:
+    def bid(self, balance: dict) -> dict:
         params = {
             'market': self.token,
             'side': 'bid',
             'ord_type': 'price',
-            'price': f"{int(balance['krw_balance'] * proportion * 0.95)}",
+            'price': f"{int(balance['krw_balance'] * self.trade_portion * 0.95)}",
         }
 
         return params
 
-    def ask(self, balance: dict, proportion: float) -> dict:
+    def ask(self, balance: dict) -> dict:
         params = {
             'market': self.token,
             'side': 'ask',
             'ord_type': 'market',
-            'volume': f"{balance['token_balance'] * proportion}",
+            'volume': f"{balance['token_balance'] * self.trade_portion}",
         }
 
         return params
@@ -122,7 +122,11 @@ class Trader:
         self.token = crypto_db.token
         
         ### 트레이딩 모듈 초기화
-        trader = TradeStrategy(algorithm = "test")
+        trader = TradeStrategy(algorithm = "basic")
+
+        if trader.algorithm != "test":
+            trainer = ModelTrainer()
+            trainer.train_setup(model = trader, learning_rate = 1e-5)
 
         start_time = datetime.datetime.now(timezone('Asia/Seoul'))
         tomorrow = start_time.date() + datetime.timedelta(days = 1)
@@ -137,16 +141,22 @@ class Trader:
             crypto_db.save_price_data()
             
             ### 데이터 호출
-            data, image_data = crypto_db.load_data(sentiment_days = 1, sentiment_type = 'all')
+            data, image_data = crypto_db.load_data(sentiment_days = 1, sentiment_type = 'all', sentiment_alpha = 0.5)
 
             ### balance 호출
             balance = self.get_current_balance()
 
             ### 트레이딩 전략 실행
-            trade_call, proportion = trader(data, balance)
+            trade_call = trader(data, image_data, balance)
+
+            if trader.algorithm != "test":
+                pass ### Update Parameters
+
+            # if trained_enough: trade_call
+            # else: trade_call = 'hold'
 
             ### 주문 호출
-            result = self.trade(trade_call, proportion, balance)
+            result = self.trade(trade_call, balance)
 
             ### 로그 데이터 저장
             crypto_db.save_log_data(current_time, balance, trade_call, result)
