@@ -44,7 +44,7 @@ BEGIN
     RETURN sentiment_value;
 END;
 
-CREATE FUNCTION IF NOT EXISTS SENTIMENT_RATIO(sentiment_days INT)
+CREATE FUNCTION IF NOT EXISTS SENTIMENT_RATIO(sentiment_days INT, alpha FLOAT(3, 2))
 	RETURNS DECIMAL(4, 3)
 	DETERMINISTIC
 BEGIN
@@ -63,7 +63,7 @@ BEGIN
 
 	SELECT POS_NEG_RATIO(sentiment_days) INTO pos_neg_ratio;
 
-	SET sentiment_value = pos_neg_ratio * (1 - neutral_ratio);
+	SET sentiment_value = pos_neg_ratio * (1 - neutral_ratio * alpha);
 	RETURN sentiment_value;
 END;
 
