@@ -1,11 +1,10 @@
 services:
   trader:
     tty: true
-    image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
+    # image: pytorch/pytorch:2.3.0-cuda12.1-cudnn8-devel
+    build: .
     container_name: python_trade
     shm_size: '24gb'
-    # command: /bin/sh -c "pip install transformers PyJWT python-dateutil pymysql matplotlib ftfy regex tqdm && /bin/bash"
-    command: bash env_install.sh
     volumes:
     - project_repo:/workspace
     - $PWD:/workspace
