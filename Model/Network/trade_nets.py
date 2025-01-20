@@ -11,10 +11,12 @@ class TradeNetBasic(nn.Module):
         self.clip_model, __preprocess = clip.load("ViT-B/32", device = self.device)
         ### CLIP의 파라미터는 업데이트 X, fusion layer와 classifier만 학습
         self.trader_layers = nn.Sequential(self.fusion_layer(),
-                                   self.classifier())
+                                           self.classifier())
         ### CLIP과 동일하게 dtype float16으로 맞춰줌, Backward Propagation에는 Scaler 사용해서 Gradient 0 방지
-        self.trader_layers = self.trader_layers.to(self.device).type(torch.float16)
+        self.trader_layers = self.trader_layers.to(self.device)
+        # .type(torch.float16)
     
+    @torch.cuda.amp.autocast()
     def forward(self, image, price_data):
         texts = []
         for k, v in price_data.items():

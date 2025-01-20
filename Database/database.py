@@ -141,15 +141,48 @@ class CryptoDB:
     
     def save_log_data(self, *data) -> None:
         log = (self.token, str(data[0].date()), str(data[0].time()), 
-               data[1]['krw_balance'], data[1]['token_balance'], data[2], json.dumps(data[3]))
+               data[1]['krw_balance'], data[1]['token_balance'], data[2], data[3], json.dumps(data[4]))
         self.check_data_type(log, 'Trade_Log')
 
         query = "INSERT INTO Trade_Log (" \
-                + "token, trade_date, trade_time, krw_balance, token_balance, trade_call, trade_result" \
-                + ") VALUES(%s, %s, %s, %s, %s, %s, %s)"
+                + "token, trade_date, trade_time, krw_balance, token_balance, trade_call, target, trade_result" \
+                + ") VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
         
         self.cursor.execute(query, log)
         self.conn.commit()
+
+    def get_target(self) -> float:
+        ### 1시간 평균 변화율
+        ### 직전 시간 ~ 60개 테이블 -> 현재 시간 ~ 60개 테이블 join -> 변화율 계산
+        query = "SELECT AVG(ABS(((trade_price - price_before) / price_before))) AS change_rate " \
+                + "FROM " \
+                + "(SELECT trade_date_kst, trade_time_kst, trade_price, LAG(trade_price, 1, '0') " \
+                + "OVER (ORDER BY trade_date_kst, trade_time_kst) AS price_before " \
+                + "FROM Upbit " \
+                + "ORDER BY trade_date_kst DESC, trade_time_kst DESC " \
+                + "LIMIT 60) S " \
+                + "WHERE price_before >= 0;"
+        self.cursor.execute(query)
+        avg_change_rate = self.cursor.fetchall()
+
+        ### 직전 두 개 가격 데이터 호출 (현 시점 + 직전 시점 가격 정보)
+        query = "SELECT (trade_price - price_before) / price_before AS change_rate " \
+                + "FROM " \
+                + "(SELECT trade_price, LAG(trade_price, 1, '0') OVER (ORDER BY trade_date_kst, trade_time_kst) AS price_before " \
+                + "FROM Upbit " \
+                + "ORDER BY trade_date_kst DESC, trade_time_kst DESC " \
+                + "LIMIT 1) S;"
+        self.cursor.execute(query)
+        change_rate = self.cursor.fetchall()
+
+        return change_rate[0]['change_rate'], avg_change_rate[0]['change_rate']
+    
+    def get_eval_data(self) -> dict:
+        query = "SELECT trade_call, target FROM Trade_Log WHERE TIMESTAMP(trade_date, trade_time) >= DATE_ADD(NOW(), INTERVAL -1 DAY);"
+        self.cursor.execute(query)
+        result = self.cursor.fetchall()
+
+        return result
 
     def load_data(self, sentiment_days: int = 1, sentiment_type: str = 'all', sentiment_alpha: float = 0.5) -> dict:
         sentiment_types = {'all': 'SENTIMENT_RATIO',
