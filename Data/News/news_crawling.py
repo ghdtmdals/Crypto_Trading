@@ -34,13 +34,15 @@ class NewsCrawling:
             temp_data = {}
             title = self.__get_title(news, title_tag, title_class_name)
             date = self.__get_date(news, date_tag, date_class_name)
-            # temp_data = (self.token, str(date.date()), self.source, title, self.__run_sentiment(sentiment_analyzer, title))
-            # news_data.append(temp_data)
-            if date.date() == self.current_date.date():
-                temp_data = (self.token, str(date.date()), self.source, title, self.__run_sentiment(sentiment_analyzer, title))
-                news_data.append(temp_data)
-            else: ### 최신순으로 출력됨
-                break
+            
+            ### 수집 되는거 그냥 다 수집
+            temp_data = (self.token, str(date.date()), self.source, title, self.__run_sentiment(sentiment_analyzer, title))
+            news_data.append(temp_data)
+            # if date.date() == self.current_date.date():
+            #     temp_data = (self.token, str(date.date()), self.source, title, self.__run_sentiment(sentiment_analyzer, title))
+            #     news_data.append(temp_data)
+            # else: ### 최신순으로 출력됨
+            #     break
         
         return news_data
 

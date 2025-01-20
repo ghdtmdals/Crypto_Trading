@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS Trade_Log (
 	krw_balance INT UNSIGNED NOT NULL,
 	token_balance DECIMAL(10, 8) UNSIGNED NOT NULL,
 	trade_call VARCHAR(4) NOT NULL,
+	`target` VARCHAR(4) NOT NULL,
 	trade_result JSON NOT NULL,
 	CONSTRAINT Trade_Log_FK FOREIGN KEY(`token`) REFERENCES Crypto_Info(`token`)
 );

@@ -12,7 +12,7 @@ from pytz import timezone
 import json
 
 from Database.database import CryptoDB
-from Model.Network.trade_strategy import TradeStrategy, ModelTrainer
+from Model.Network.trade_strategy import TradeStrategy
 
 class Trader:
     def __init__(self, coin_name: str, trade_portion: float = 1.0):
@@ -65,10 +65,16 @@ class Trader:
             return {"trade_result": "no trade"}
         
         if call == "bid":
-            params = self.bid(balance)
+            if balance['krw_balance'] > 5000:
+                params = self.bid(balance)
+            else:
+                return {"trade_result": "not enough krw balance"}
 
         elif call == "ask":
-            params = self.ask(balance)
+            if balance['token_balance'] > 0:
+                params = self.ask(balance)
+            else:
+                return {"trade_result": "not enough token balance"}
 
         url = "https://api.upbit.com/v1/orders"
         
@@ -122,11 +128,7 @@ class Trader:
         self.token = crypto_db.token
         
         ### 트레이딩 모듈 초기화
-        trader = TradeStrategy(algorithm = "basic")
-
-        if trader.algorithm != "test":
-            trainer = ModelTrainer()
-            trainer.train_setup(model = trader, learning_rate = 1e-5)
+        trader = TradeStrategy(self.token, "basic", learning_rate = 1e-5)
 
         start_time = datetime.datetime.now(timezone('Asia/Seoul'))
         tomorrow = start_time.date() + datetime.timedelta(days = 1)
@@ -147,29 +149,29 @@ class Trader:
             balance = self.get_current_balance()
 
             ### 트레이딩 전략 실행
-            trade_call = trader(data, image_data, balance)
-
-            if trader.algorithm != "test":
-                pass ### Update Parameters
-
-            # if trained_enough: trade_call
-            # else: trade_call = 'hold'
+            change_rate, avg_change_rate = crypto_db.get_target() ### Target 계산용
+            target = trader.get_target(change_rate, avg_change_rate)
+            trade_call = trader(data, image_data, target)
 
             ### 주문 호출
             result = self.trade(trade_call, balance)
 
             ### 로그 데이터 저장
-            crypto_db.save_log_data(current_time, balance, trade_call, result)
+            crypto_db.save_log_data(current_time, balance, trade_call, trader.calls[target], result)
 
             ### 일정 시점마다 새로운 token 추가 여부 확인 (하루) + 뉴스 데이터 수집 + 차트 이미지 갱신
             if current_time.date() == tomorrow and current_time.hour == 13:
                 tomorrow = current_time.date() + datetime.timedelta(days = 1)
                 crypto_db.collect_crypto_info()
                 crypto_db.save_daily_data()
+                trader.eval()
 
             print(f"Current Time: {current_time.strftime('%Y-%m-%d %H:%M:%S')} | " \
                   + f"Current KRW Balance: {round(balance['krw_balance'], 3)} | " \
-                  + f"Current {self.token} Balance: {balance['token_balance']} | Trade Call: {trade_call}")
+                  + f"Current {self.token} Balance: {balance['token_balance']} | Trade Call: {trade_call} | Target: {trader.calls[target]}")
+            
+            ### 평가 실행
+            trader.eval(crypto_db.get_eval_data())
 
             ### 1분에 한 번씩 실행
             time.sleep(60)

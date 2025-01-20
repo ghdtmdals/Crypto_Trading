@@ -1,9 +1,8 @@
 -- Sentiment 함수
--- 정의 불가 시 mysql root 계정 접근 후
--- set global log_bin_trust_function_creators=on;
+-- 정의 불가 시 mysql root 계정 접근
+-- SET GLOBAL log_bin_trust_function_creators = ON;
 -- 완료 후
 -- set global log_bin_trust_function_creators=off;
-
 -- DELIMITER $$
 
 CREATE FUNCTION IF NOT EXISTS AVG_SENTIMENT(sentiment_days INT)

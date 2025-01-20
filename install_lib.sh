@@ -11,5 +11,7 @@ pip install transformers PyJWT python-dateutil pymysql matplotlib ftfy regex tqd
 
 pip install git+https://github.com/openai/CLIP.git
 
+conda install -y scikit-learn
+
 ### 컨테이너 종료 방지
-/bin/bash
+# /bin/bash

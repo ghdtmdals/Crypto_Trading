@@ -10,7 +10,7 @@ def main(*token):
         multi_token_trade(token)
 
 def single_token_trade(token):
-    trader = Trader(token[0])
+    trader = Trader(token[0], trade_portion = 1.0)
     trader.start_trading()
 
 def multi_token_trade(token): 
