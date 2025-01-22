@@ -152,6 +152,7 @@ class CryptoDB:
         self.conn.commit()
 
     def get_target(self) -> float:
+        ### 처음 실행하면 가격 데이터가 늦게 들어가서 Nonetype 에러 발생
         ### 1시간 평균 변화율
         ### 직전 시간 ~ 60개 테이블 -> 현재 시간 ~ 60개 테이블 join -> 변화율 계산
         query = "SELECT AVG(ABS(((trade_price - price_before) / price_before))) AS change_rate " \
