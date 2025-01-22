@@ -9,7 +9,6 @@ from urllib.parse import urlencode, unquote
 import time
 import datetime
 from pytz import timezone
-import json
 
 from Database.database import CryptoDB
 from Model.Network.trade_strategy import TradeStrategy
@@ -153,8 +152,13 @@ class Trader:
             target = trader.get_target(change_rate, avg_change_rate)
             trade_call = trader(data, image_data, target)
 
-            ### 주문 호출
-            result = self.trade(trade_call, balance)
+            if trader.get_accuracy(crypto_db.get_eval_data()) >= 0.5:
+                ### 주문 호출
+                result = self.trade(trade_call, balance)
+            else:
+                result = {"no trade": "not sufficient accuracy"}
+                
+
 
             ### 로그 데이터 저장
             crypto_db.save_log_data(current_time, balance, trade_call, trader.calls[target], result)
