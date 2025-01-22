@@ -1,6 +1,5 @@
 import os
 import torch
-import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import datetime
 from Model.Network.trade_nets import TradeNetBasic
@@ -33,7 +32,7 @@ class ModelTrainer:
         self.criterion = torch.nn.CrossEntropyLoss()
         self.scaler = torch.cuda.amp.GradScaler() ### FP16
     
-    def train(self, target):
+    def train(self, target) -> None:
         if self.algorithm != "test":
             with torch.cuda.amp.autocast():
                 loss = self.criterion(self.output, target)
@@ -42,7 +41,7 @@ class ModelTrainer:
             self.scaler.update()
             self.save_model()
 
-    def eval(self, trade_logs):
+    def eval(self, trade_logs) -> None:
         preds = []
         targets = []
         for log in trade_logs:
@@ -54,6 +53,15 @@ class ModelTrainer:
                   + f"Avg Recall = {round(recall_score(targets, preds, average = 'weighted', zero_division = 1.0), 3)} | " \
                   + f"Avg F1 Score = {round(f1_score(targets, preds, average = 'weighted', zero_division = 1.0), 3)}"
         print(eval_str)
+    
+    def get_accuracy(self, trade_logs) -> float:
+        preds = []
+        targets = []
+        for log in trade_logs:
+            preds.append(log['trade_call'])
+            targets.append(log['target'])
+        
+        return accuracy_score(targets, preds)
 
     def save_model(self):
         if not os.path.isdir(self.ckpnt_root):
