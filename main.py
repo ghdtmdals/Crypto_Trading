@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from Trade.trade import Trader
+import time
 
 ### Pytorch 컨테이너 사용
 ### pip install transformers PyJWT python-dateutil mysql-connector-python
@@ -25,6 +26,7 @@ def auto_restart(token, *exceptions):
         yield
     except exceptions as e:
         print(e)
+        time.sleep(60)
         main(token)
 
 if __name__ == "__main__":
