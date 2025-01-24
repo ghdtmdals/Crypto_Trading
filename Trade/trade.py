@@ -168,7 +168,7 @@ class Trader:
                 tomorrow = current_time.date() + datetime.timedelta(days = 1)
                 crypto_db.collect_crypto_info()
                 crypto_db.save_daily_data()
-                trader.eval()
+                trader.eval(crypto_db.get_eval_data())
 
             print(f"Current Time: {current_time.strftime('%Y-%m-%d %H:%M:%S')} | " \
                   + f"Current KRW Balance: {round(balance['krw_balance'], 3)} | " \
