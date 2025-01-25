@@ -6,11 +6,12 @@ import time
 ### pip install transformers PyJWT python-dateutil mysql-connector-python
 
 def main(*token):
-    with auto_restart(token, Exception):
         if len(token) == 1:
-            single_token_trade(token)
+            with auto_restart(token[0], Exception):
+                single_token_trade(token)
         else:
-            multi_token_trade(token)
+            with auto_restart(token, Exception):
+                multi_token_trade(token)
 
 def single_token_trade(token):
     trader = Trader(token[0], trade_portion = 1.0)
