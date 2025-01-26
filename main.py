@@ -3,6 +3,7 @@ from Trade.trade import Trader
 import time
 import os
 import sys
+import gc
 
 ### Pytorch 컨테이너 사용
 ### pip install transformers PyJWT python-dateutil mysql-connector-python
@@ -29,8 +30,10 @@ def auto_restart(token, *exceptions):
         yield
     except exceptions as e:
         print(e)
+        gc.collect()
         time.sleep(10)
-        os.execl(sys.executable, sys.executable, *sys.argv)
+        main(token)
+        # os.execl(sys.executable, sys.executable, *sys.argv)
 
 if __name__ == "__main__":
     main('Bitcoin')
