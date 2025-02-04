@@ -29,7 +29,14 @@ class UpbitCandle:
         self.delete_past_chart()
 
         params = {"market": self.token, "count": self.days}
-        resp = requests.get(self.url, params = params)
+        
+        while True:
+            try:
+                resp = requests.get(self.url, params = params)
+                break
+            except Exception as e:
+                print(e)
+
         price_data = []
         for data in resp.json():
             price_data.append(data[self.price_type]) ### 최신순으로 정렬되어있음
@@ -39,12 +46,6 @@ class UpbitCandle:
         self.image_path = '%s/%s.png' % (self.root, str(now))
         self.convert_to_image(price_data)
 
-    def convert_to_image(self, price_data) -> None:
-        plt.gca().axes.xaxis.set_visible(False)
-        plt.gca().axes.yaxis.set_visible(False)
-        plt.plot(list(reversed(price_data)), linewidth = 2.5, color = 'dodgerblue')
-        plt.savefig(self.image_path, dpi = 100, bbox_inches = 'tight', pad_inches = 0)
-    
     def get_image_tensor(self) -> torch.Tensor:
         transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -57,7 +58,13 @@ class UpbitCandle:
 
         return transform(chart_image)
     
-    def delete_past_chart(self):
+    def convert_to_image(self, price_data) -> None:
+        plt.gca().axes.xaxis.set_visible(False)
+        plt.gca().axes.yaxis.set_visible(False)
+        plt.plot(list(reversed(price_data)), linewidth = 2.5, color = 'dodgerblue')
+        plt.savefig(self.image_path, dpi = 100, bbox_inches = 'tight', pad_inches = 0)
+    
+    def delete_past_chart(self) -> None:
         past_date = datetime.datetime.now(timezone('Asia/Seoul')).date() - datetime.timedelta(days = 90) ### 90일간 데이터만 유지
         chart_images = os.listdir(self.root)
 

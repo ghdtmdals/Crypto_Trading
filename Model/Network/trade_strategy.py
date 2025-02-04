@@ -18,12 +18,12 @@ class ModelTrainer:
         self.criterion = None
         self.scaler = None
     
-    def get_target(self, change_rate: float, avg_change_rate: float):
+    def get_target(self, change_rate: float, avg_change_rate: float) -> torch.Tensor:
         if change_rate > avg_change_rate: return torch.Tensor([2]).type(torch.uint8) # ask
         if change_rate < -avg_change_rate: return torch.Tensor([0]).type(torch.uint8) # bid
         return torch.Tensor([1]).type(torch.uint8) # hold
     
-    def train_setup(self):
+    def train_setup(self) -> None:
         self.ckpnt_root = "./Model/checkpoints/"
         self.load_model()
 
@@ -63,7 +63,7 @@ class ModelTrainer:
         
         return accuracy_score(targets, preds)
 
-    def save_model(self):
+    def save_model(self) -> None:
         if not os.path.isdir(self.ckpnt_root):
             os.mkdir(self.ckpnt_root)
         
@@ -72,7 +72,7 @@ class ModelTrainer:
                     'updated': now},
                    f"{self.ckpnt_root}{self.token}.pt")
 
-    def load_model(self):
+    def load_model(self) -> None:
         ckpnt_path = f"{self.ckpnt_root}{self.token}.pt"
         if os.path.isfile(ckpnt_path):
             self.model.trader_layers.load_state_dict(torch.load(ckpnt_path)['model_state_dict'])

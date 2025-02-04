@@ -44,7 +44,13 @@ class Trader:
         'Authorization': authorization,
         }
 
-        resp = requests.get(url, headers=headers)
+        while True:
+            try:
+                resp = requests.get(url, headers=headers)
+                break
+            except Exception as e:
+                print(e)
+
         balance_info = resp.json()
 
         krw_index = self.find_token_index(balance_info, "KRW")
@@ -97,7 +103,13 @@ class Trader:
             'Authorization': authorization,
         }
 
-        resp = requests.post(url, json=params, headers=headers)
+        while True:
+            try:
+                resp = requests.post(url, json=params, headers=headers)
+                break
+            except Exception as e:
+                print(e)
+                
         return resp.json()
     
     def bid(self, balance: dict) -> dict:
