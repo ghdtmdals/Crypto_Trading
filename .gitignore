@@ -17,4 +17,4 @@ Model/ModelTrainer/__pycache__/
 Model/Network/__pycache__/
 Trade/__pycache__/
 
-logs/
+airflow/logs/

@@ -77,9 +77,9 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
-    - ${AIRFLOW_PROJ_DIR:-.}:/opt/airflow/Crypto_Trading
   networks:
     - trader-network
+    - default
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
@@ -147,6 +147,9 @@ services:
       POSTGRES_DB: airflow
     volumes:
       - postgres-db-volume:/var/lib/postgresql/data
+    networks:
+    - trader-network
+    - default
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "airflow"]
       interval: 10s
