@@ -4,6 +4,16 @@ from pytz import timezone
 from Data.News.news_crawling import NewsCrawling
 
 class CoinPedia(NewsCrawling):
+    # @staticmethod
+    # def af_get_news_data(coin_name, token) -> List[tuple]:
+    #     source = 'coinpedia'
+    #     params = {"s": coin_name}
+    #     url = "https://coinpedia.org/"
+    #     return super().af_get_news_data(token, source, url, params, \
+    #                                     title_block_tag = 'div', title_block_class_name = 'post_details', \
+    #                                     title_tag = 'h2', title_class_name = 'post_title', \
+    #                                     date_tag = 'span', date_class_name = 'data meta-item tie-icon')
+
     def __init__(self, coin_name: str, token: str):
         ### NewsCrawling 클래스의 인스턴스 속성을 모두 초기화하기 때문에 별도로 부모 클래스를 초기화 할 필요 없음
         self.coin_name = coin_name
