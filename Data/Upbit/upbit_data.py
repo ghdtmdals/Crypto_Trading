@@ -9,7 +9,7 @@ class UpbitPrice:
         self.token = token
         self.current_date = datetime.datetime.now(timezone('Asia/Seoul'))
     
-    def __call__(self) -> List[tuple]:
+    def __call__(self) -> tuple:
         # self.__save_data()
         data = self.get_prices()
         data.update(self.get_market_events())
