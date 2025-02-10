@@ -1,5 +1,8 @@
 import argparse
 
+import os
+import pymysql
+
 from Data.News.coinpedia import CoinPedia
 from Data.News.coinpress import CoinPress
 from Data.Upbit.upbit_data import UpbitPrice
@@ -50,10 +53,8 @@ if __name__ == "__main__":
     parser.add_argument("--task", type = str)
     args = parser.parse_args()
 
-    tasks = {'c_coinpedia': collect_coinpedia_data, 's_coinpedia': save_coinpedia_data, 
-             'c_coinpress': collect_coinpress_data, 's_coinpress': save_coinpress_data,
-             'c_price': collect_price_data, 's_price': save_price_data, 
-             'c_chart': collect_chart_data, 's_chart': save_chart_data,
+    tasks = {'s_coinpedia': save_coinpedia_data, 's_coinpress': save_coinpress_data,
+             's_price': save_price_data, 's_chart': save_chart_data,
              'trade': trade_crypto, 's_log': save_trade_log, 'eval': evaluate_model}
     
     tasks[args.task]()
