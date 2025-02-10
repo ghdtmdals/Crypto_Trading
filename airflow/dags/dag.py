@@ -25,8 +25,6 @@ with DAG("crypto_trading", default_args = default_args) as dag:
         bash_command = 'ssh -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" root@trader ' \
                         + '"cd /workspace && python dag_functions.py --task s_coinpress"'
     )
-    
-
 
     save_price_data = BashOperator(
         task_id = "save_price_data",
