@@ -47,12 +47,19 @@ class ModelTrainer:
         for log in trade_logs:
             preds.append(log['trade_call'])
             targets.append(log['target'])
+
+        scores = {"avg_accuracy": round(accuracy_score(targets, preds), 3),
+                  "avg_precision": round(precision_score(targets, preds, average = 'weighted', zero_division = 1.0), 3),
+                  "avg_recall": round(recall_score(targets, preds, average = 'weighted', zero_division = 1.0), 3),
+                  "avg_f1": round(f1_score(targets, preds, average = 'weighted', zero_division = 1.0), 3)}
         
-        eval_str = f"Avg Acc = {round(accuracy_score(targets, preds), 3)} | " \
-                  + f"Avg Precision = {round(precision_score(targets, preds, average = 'weighted', zero_division = 1.0), 3)} | " \
-                  + f"Avg Recall = {round(recall_score(targets, preds, average = 'weighted', zero_division = 1.0), 3)} | " \
-                  + f"Avg F1 Score = {round(f1_score(targets, preds, average = 'weighted', zero_division = 1.0), 3)}"
+        eval_str = f"Avg Acc = {scores['avg_accuracy']} | " \
+                  + f"Avg Precision = {scores['avg_precision']} | " \
+                  + f"Avg Recall = {scores['avg_recall']} | " \
+                  + f"Avg F1 Score = {scores['avg_f1']}"
         print(eval_str)
+
+        return scores
     
     def get_accuracy(self, trade_logs) -> float:
         preds = []
