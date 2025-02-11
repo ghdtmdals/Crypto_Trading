@@ -9,6 +9,8 @@ sudo apt-get install -y git vim openssh-server
 
 pip install transformers PyJWT python-dateutil pymysql matplotlib ftfy regex tqdm git+https://github.com/openai/CLIP.git
 
+pip install flask fastapi uvicorn
+
 # pip install git+https://github.com/openai/CLIP.git
 
 conda install -y scikit-learn

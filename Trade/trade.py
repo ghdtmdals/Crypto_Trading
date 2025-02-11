@@ -14,12 +14,12 @@ from Database.database import CryptoDB
 from Model.Network.trade_strategy import TradeStrategy
 
 class Trader:
-    def __init__(self, coin_name: str, trade_portion: float = 1.0):
+    def __init__(self, coin_name: str, token: str = None, trade_portion: float = 1.0):
         self.__access_key = os.environ["UPBIT_OPEN_API_ACCESS_KEY"]
         self.__secret_key = os.environ["UPBIT_OPEN_API_SECRET_KEY"]
 
         self.coin_name = coin_name
-        self.token = None
+        self.token = token
         self.trade_portion = trade_portion
 
     ### 토큰의 밸런스를 가져오기 위해 토큰이 몇 번째 인덱스인지 찾음
@@ -168,7 +168,7 @@ class Trader:
                 ### 주문 호출
                 result = self.trade(trade_call, balance)
             else:
-                result = {"no trade": "not sufficient accuracy"}
+                result = {"no trade": "accuracy not sufficient"}
                 
 
 

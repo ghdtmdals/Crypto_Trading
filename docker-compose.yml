@@ -95,7 +95,7 @@ services:
     build: .
     container_name: trader
     shm_size: ${SHM_SIZE}
-    entrypoint: bash -c "sudo service ssh start && /bin/bash"
+    # entrypoint: bash -c "sudo service ssh start && /bin/bash"
     volumes:
     - $PWD:/workspace
     ports:
@@ -106,6 +106,7 @@ services:
     - UPBIT_OPEN_API_ACCESS_KEY=${UPBIT_OPEN_API_ACCESS_KEY}
     - UPBIT_OPEN_API_SECRET_KEY=${UPBIT_OPEN_API_SECRET_KEY}
     - MYSQL_DATABASE=${MYSQL_DATABASE}
+    - MYSQL_ROOT_USER=${MYSQL_ROOT_USER}
     - MYSQL_USER=${MYSQL_USER}
     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
     - AIRFLOW_FIRSTNAME=${AIRFLOW_FIRSTNAME}
