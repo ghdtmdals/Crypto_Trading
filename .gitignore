@@ -4,6 +4,7 @@ keys.py
 
 ETC/
 Database/chart_images/
+Database/backup/
 Model/checkpoints/
 
 __pycache__/
