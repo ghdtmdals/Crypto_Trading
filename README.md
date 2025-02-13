@@ -158,10 +158,15 @@ resp.json()
 
 ```bash
 /test: 작동 테스트, 암호화폐 명 출력 (dag_api.py의 app.coin_name)
+
 /save-news: 뉴스 제목 수집 및 감성분석 수행 후 News 테이블에 저장
+
 /save-price: 암호화폐 가격 수집 후 Upbit 테이블에 저장
+
 /save-chart: 암호화폐 90일 캔들 데이터 수집 후 이미지 변환 뒤 /Database/chart_images에 저장
+
 /trade: 암호화폐 자동매매 1회 실행 및 결과 Trade_Log에 저장
+
 /eval-model: 딥러닝 기반 자동매매 모델 성능 평가
 ```
 
