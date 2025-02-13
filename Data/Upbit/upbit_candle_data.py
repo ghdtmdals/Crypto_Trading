@@ -1,5 +1,6 @@
 import os
 import requests
+import matplotlib
 import matplotlib.pyplot as plt
 import datetime
 from dateutil.parser import parse
@@ -59,6 +60,7 @@ class UpbitCandle:
         return transform(chart_image)
     
     def convert_to_image(self, price_data) -> None:
+        matplotlib.use('Agg')
         plt.gca().axes.xaxis.set_visible(False)
         plt.gca().axes.yaxis.set_visible(False)
         plt.plot(list(reversed(price_data)), linewidth = 2.5, color = 'dodgerblue')

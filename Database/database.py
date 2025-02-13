@@ -13,12 +13,13 @@ class CryptoDB:
     def __init__(self, coin_name):
         self.conn = pymysql.connect(
                         host = 'mysqldb',
-                        user = os.environ['MYSQL_USER'],
-                        password = os.environ['MYSQL_PASSWORD'],
+                        user = os.environ['MYSQL_ROOT_USER'],
+                        password = os.environ['MYSQL_ROOT_PASSWORD'],
                         database = os.environ['MYSQL_DATABASE'],
                         client_flag = CLIENT.MULTI_STATEMENTS
                     )
         self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
+
         self.create_tables()
         self.collect_crypto_info()
 
@@ -37,6 +38,7 @@ class CryptoDB:
 
     ### DB 테이블 생성
     def create_tables(self) -> None:
+        print("Creating Tables and Etc...")
         with open("./Database/create_tables.sql", "r") as f:
             sql = f.read()
         self.cursor.execute(sql)
@@ -120,7 +122,7 @@ class CryptoDB:
         self.cursor.execute(query, data)
         self.conn.commit()
 
-    def save_daily_data(self) -> None:
+    def save_news_data(self) -> None:
         for news in self.news:
             print(f"Collecting {news.coin_name} News Data From {news.source}")
             data = news()
@@ -136,8 +138,13 @@ class CryptoDB:
         query = "DELETE a FROM News a, News b WHERE a.id > b.id AND a.title = b.title;"
         self.cursor.execute(query)
         self.conn.commit()
-        
+
+    def save_chart_data(self) -> None:
         self.upbit_candle.save_chart_image()
+
+    def save_daily_data(self) -> None:
+        self.save_news_data()
+        self.save_chart_data()
     
     def save_log_data(self, *data) -> None:
         log = (self.token, str(data[0].date()), str(data[0].time()), 

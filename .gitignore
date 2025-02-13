@@ -1,10 +1,10 @@
 test.ipynb
 keys.py
-api_test.py
 .env
 
 ETC/
 Database/chart_images/
+Database/backup/
 Model/checkpoints/
 
 __pycache__/
