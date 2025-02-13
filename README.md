@@ -88,7 +88,7 @@
 
 # 실행 예시
 
-## Prerequsite
+## Prerequisite
 
 - **환경변수에 SHM_SIZE 할당**
 
