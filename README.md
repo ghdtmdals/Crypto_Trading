@@ -31,9 +31,9 @@
     |  | **결과 기반 모델 파라미터 업데이트** |  |
     | **Airflow** | **데이터 수집 ~ 모델 평가 파이프라인 구성** | **1분 단위 Dag 구현** |
     |  | **API 호출 기반 태스크 수행** | **Flask 기반 API 구현** |
-    1. **Future Plan**
-        - **뉴스 본문 수집 및 데이터 마트 구축**
-        - **실시간 자동매매 모델 성능 Monitoring 환경 구축**
+3. **Future Plan**
+    - **뉴스 본문 수집 및 데이터 마트 구축**
+    - **실시간 자동매매 모델 성능 Monitoring 환경 구축**
 
 ---
 
@@ -94,6 +94,12 @@
 
 ```bash
 source run_before_docker_compose.sh
+```
+
+- **Container 실행**
+
+```bash
+docker-compose up -d
 ```
 
 ## 기본 실행 예시 (무한 반복문 기반)
