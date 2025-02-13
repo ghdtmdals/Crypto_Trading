@@ -1,5 +1,18 @@
 test.ipynb
-
 keys.py
+.env
 
 ETC/
+Database/chart_images/
+Model/checkpoints/
+
+__pycache__/
+Data/__pycache__/
+Data/News/__pycache__/
+Data/Upbit/__pycache__/
+Database/__pycache__/
+Model/__pycache__/
+Model/Dataloader/__pycache__/
+Model/ModelTrainer/__pycache__/
+Model/Network/__pycache__/
+Trade/__pycache__/
