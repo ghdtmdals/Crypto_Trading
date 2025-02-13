@@ -31,9 +31,9 @@
     |  | **결과 기반 모델 파라미터 업데이트** |  |
     | **Airflow** | **데이터 수집 ~ 모델 평가 파이프라인 구성** | **1분 단위 Dag 구현** |
     |  | **API 호출 기반 태스크 수행** | **Flask 기반 API 구현** |
-3. **Future Plan**
-    - **뉴스 본문 수집 및 데이터 마트 구축**
-    - **실시간 자동매매 모델 성능 Monitoring 환경 구축**
+    1. **Future Plan**
+        - **뉴스 본문 수집 및 데이터 마트 구축**
+        - **실시간 자동매매 모델 성능 Monitoring 환경 구축**
 
 ---
 
@@ -133,20 +133,26 @@ python dag_api.py
 ```bash
 ### Local
 curl -X GET http://localhost:4000/test
+```
 
+```bash
 ### Inside A Container
 curl -X GET http://trader:4000/test
 ```
 
 - **requests**
 
-```bash
+```python
 import requests
+```
 
+```python
 ### Local
 resp = requests.get("http://localhost:4000/test")
 resp.json()
+```
 
+```python
 ### Inside A Container
 resp = requests.get("http://trader:4000/test")
 resp.json()
