@@ -1,5 +1,6 @@
 test.ipynb
 keys.py
+api_test.py
 .env
 
 ETC/
@@ -16,3 +17,5 @@ Model/Dataloader/__pycache__/
 Model/ModelTrainer/__pycache__/
 Model/Network/__pycache__/
 Trade/__pycache__/
+
+airflow/logs/

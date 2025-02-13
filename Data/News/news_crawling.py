@@ -6,10 +6,83 @@ import json
 
 import datetime
 from dateutil.parser import parse
+from pytz import timezone
 
 from Data.News.sentiment_analysis import Sentiment
 
 class NewsCrawling:
+    
+    ######################################################################################################################
+    #############################################                            #############################################
+    ############################################# STATIC METHODS FOR AIRFLOW #############################################
+    #############################################                            #############################################
+    ######################################################################################################################
+
+    # @staticmethod
+    # def af_get_news_data(token: str, source: str, url: str, params: dict, title_block_tag: str, title_block_class_name: str, \
+    #                      title_tag: str, title_class_name: str, date_tag: str, date_class_name: str) -> list:
+    #     sentiment_analyzer = Sentiment()
+
+    #     current_date = datetime.datetime.now(timezone('Asia/Seoul'))
+
+    #     while True:
+    #         try:
+    #             resp = requests.get(url, params = params)
+    #             break
+    #         except Exception as e:
+    #             print(e)
+        
+    #     soup = BeautifulSoup(resp.text, 'html.parser')
+    #     crypto_news = soup.find_all(title_block_tag, title_block_class_name)
+
+    #     news_data = []
+    #     for news in crypto_news:
+    #         temp_data = {}
+    #         title = NewsCrawling.af_get_title(news, title_tag, title_class_name)
+    #         date = NewsCrawling.af_get_date(news, date_tag, date_class_name)
+            
+    #         ### 수집 되는거 그냥 다 수집
+    #         # temp_data = (self.token, str(date.date()), self.source, title, self.run_sentiment(sentiment_analyzer, title))
+    #         # news_data.append(temp_data)
+    #         if date.date() == current_date.date():
+    #             temp_data = (token, str(date.date()), source, title, NewsCrawling.run_sentiment(sentiment_analyzer, title))
+    #             news_data.append(temp_data)
+    #         else: ### 최신순으로 출력됨
+    #             break
+        
+    #     return news_data
+    
+    # @staticmethod
+    # def af_get_title(soup, title_tag: str, title_class_name: str) -> str:
+    #     ### 뉴스 타이틀만 호출
+    #     title = soup.find(title_tag, title_class_name).text
+    #     return title
+
+    # @staticmethod
+    # def af_get_date(soup, date_tag: str, date_class_name: str) -> datetime.datetime:
+    #     ### 날짜 가져오기
+    #     date = soup.find(date_tag, date_class_name).text
+    #     ### 'B d(0패딩 x), YYYY' -> 'YYYY-MM-DD'
+    #     ### Ex) 'January 3, 2025' -> '2025-01-03'
+    #     date = parse(date)
+    #     return date
+
+    # @staticmethod
+    # def af_run_sentiment(analyzer, text: str) -> str:
+    #     result = analyzer.get_sentiment(text)
+    #     if result == 0:
+    #         return "Negative"
+    #     elif result == 1:
+    #         return "Neutral"
+    #     else:
+    #         return "Positive"
+    
+    ######################################################################################################################
+    #####################################################            #####################################################
+    ##################################################### END STATIC #####################################################
+    #####################################################            #####################################################
+    ######################################################################################################################
+
     def __init__(self):
         self.coin_name = None
         self.token = None
@@ -25,33 +98,39 @@ class NewsCrawling:
         sentiment_analyzer = Sentiment()
 
         ### 오늘자 뉴스만 가져옴
-        resp = requests.get(self.url, params = self.params)
+        while True:
+            try:
+                resp = requests.get(self.url, params = self.params)
+                break
+            except Exception as e:
+                print(e)
+
         soup = BeautifulSoup(resp.text, 'html.parser')
-        coinpedia_news = soup.find_all(title_block_tag, title_block_class_name)
+        crypto_news = soup.find_all(title_block_tag, title_block_class_name)
 
         news_data = []
-        for news in coinpedia_news:
+        for news in crypto_news:
             temp_data = {}
-            title = self.__get_title(news, title_tag, title_class_name)
-            date = self.__get_date(news, date_tag, date_class_name)
+            title = self.get_title(news, title_tag, title_class_name)
+            date = self.get_date(news, date_tag, date_class_name)
             
             ### 수집 되는거 그냥 다 수집
-            temp_data = (self.token, str(date.date()), self.source, title, self.__run_sentiment(sentiment_analyzer, title))
-            news_data.append(temp_data)
-            # if date.date() == self.current_date.date():
-            #     temp_data = (self.token, str(date.date()), self.source, title, self.__run_sentiment(sentiment_analyzer, title))
-            #     news_data.append(temp_data)
-            # else: ### 최신순으로 출력됨
-            #     break
+            # temp_data = (self.token, str(date.date()), self.source, title, self.run_sentiment(sentiment_analyzer, title))
+            # news_data.append(temp_data)
+            if date.date() == self.current_date.date():
+                temp_data = (self.token, str(date.date()), self.source, title, self.run_sentiment(sentiment_analyzer, title))
+                news_data.append(temp_data)
+            else: ### 최신순으로 출력됨
+                break
         
         return news_data
 
-    def __get_title(self, soup, title_tag: str, title_class_name: str) -> str:
+    def get_title(self, soup, title_tag: str, title_class_name: str) -> str:
         ### 뉴스 타이틀만 호출
         title = soup.find(title_tag, title_class_name).text
         return title
 
-    def __get_date(self, soup, date_tag: str, date_class_name: str) -> datetime.datetime:
+    def get_date(self, soup, date_tag: str, date_class_name: str) -> datetime.datetime:
         ### 날짜 가져오기
         date = soup.find(date_tag, date_class_name).text
         ### 'B d(0패딩 x), YYYY' -> 'YYYY-MM-DD'
@@ -59,7 +138,7 @@ class NewsCrawling:
         date = parse(date)
         return date
     
-    def __run_sentiment(self, analyzer, text: str) -> str:
+    def run_sentiment(self, analyzer, text: str) -> str:
         result = analyzer.get_sentiment(text)
         ### 0, 1, 2로 출력됨
         ### 나중에 보면 헷갈릴 수 있으니 단어로 변환해 저장

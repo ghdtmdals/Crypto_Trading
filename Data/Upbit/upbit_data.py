@@ -9,21 +9,28 @@ class UpbitPrice:
         self.token = token
         self.current_date = datetime.datetime.now(timezone('Asia/Seoul'))
     
-    def __call__(self) -> List[tuple]:
+    def __call__(self) -> tuple:
         # self.__save_data()
-        data = self.__get_prices()
-        data.update(self.__get_market_events())
+        data = self.get_prices()
+        data.update(self.get_market_events())
 
         return (data['token'], data['trade_date_kst'], data['trade_time_kst'], data['high_price'], data['low_price'],
                 data['opening_price'], data['trade_price'], data['signed_change_rate'], data['warning'],
                 data['deposit_amount_soaring'], data['global_price_differences'], data['price_fluctuations'],
                 data['trading_volume_soaring'], data['concentration_of_small_accounts'])
 
-    def __get_prices(self) -> dict:
+    def get_prices(self) -> dict:
         ### API로 한 번에 가격 정보 호출 가능
         payload = {"markets": self.token}
         url = "https://api.upbit.com/v1/ticker"
-        resp = requests.get(url, params = payload)
+        
+        while True:
+            try:
+                resp = requests.get(url, params = payload)
+                break
+            except Exception as e:
+                print(e)
+
         price_info = {
             "token": resp.json()[0]['market'],
             "trade_date_kst": str(parse(resp.json()[0]['trade_date_kst']).date()),
@@ -38,10 +45,16 @@ class UpbitPrice:
         return price_info
 
     ### 주의, 유의 지정 여부
-    def __get_market_events(self) -> dict:
+    def get_market_events(self) -> dict:
         url = "https://api.upbit.com/v1/market/all"
         payload = {'is_details': True}
-        resp = requests.get(url, params = payload)
+
+        while True:
+            try:
+                resp = requests.get(url, params = payload)
+                break
+            except Exception as e:
+                print(e)
 
         ### collect_crypto_info와 동일한 response, 
         ### 실시간으로 계속 호출을 수행하는데 매번 정렬하고 이진탐색을 수행하기보다는 단순히 선형으로 탐색하는 것이 효율적
