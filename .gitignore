@@ -8,6 +8,9 @@ Database/chart_images/
 Database/backup/
 Model/checkpoints/
 
+power_bi/crypto_db.sql
+power_bi/scheduler.log
+
 __pycache__/
 Data/__pycache__/
 Data/News/__pycache__/
