@@ -125,7 +125,7 @@ services:
               capabilities: [gpu]
   
   mysqldb:
-    image: mysql:latest
+    image: mysql:9.2.0
     container_name: mysql_db
     volumes:
     - mysql-db-volume:/var/lib/mysql
