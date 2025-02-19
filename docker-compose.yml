@@ -5,7 +5,7 @@ services:
     build: .
     container_name: metrics_calculator
     volumes:
-    - $PWD:/workspace
+    - $PWD/metrics_calculation:/workspace
     networks:
     - powerbi-network
     ports:
@@ -16,7 +16,7 @@ services:
     - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     - MYSQL_USER=${MYSQL_USER}
     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-    - REMOTE_MYSQL_SOURCE=${REMOTE_MYSQL_SOURCE}
+    - MYSQL_REMOTE_SOURCE=${MYSQL_REMOTE_SOURCE}
     depends_on:
     - remote_mysql
   
@@ -25,15 +25,18 @@ services:
     container_name: remote_mysql
     volumes:
     - mysql-db-volume:/var/lib/mysql
+    - $PWD/remote_dump:/remote_dump
     ports:
     - 3307:3306
     networks:
     - powerbi-network
     environment:
+    - MYSQL_ROOT_USER=${MYSQL_ROOT_USER}
     - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
     - MYSQL_DATABASE=${MYSQL_DATABASE}
     - MYSQL_USER=${MYSQL_USER}
     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    - MYSQL_REMOTE_SOURCE=${MYSQL_REMOTE_SOURCE}
 
 volumes:
   mysql-db-volume:
