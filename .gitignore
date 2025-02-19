@@ -8,9 +8,6 @@ Database/chart_images/
 Database/backup/
 Model/checkpoints/
 
-power_bi/crypto_db.sql
-power_bi/scheduler.log
-
 __pycache__/
 Data/__pycache__/
 Data/News/__pycache__/
@@ -23,3 +20,7 @@ Model/Network/__pycache__/
 Trade/__pycache__/
 
 airflow/logs/
+
+power_bi/crypto_db.sql
+power_bi/scheduler.log
+power_bi/.env
