@@ -8,6 +8,8 @@ services:
     - $PWD:/workspace
     networks:
     - powerbi-network
+    ports:
+    - 4040:4040
     environment:
     - MYSQL_DATABASE=${MYSQL_DATABASE}
     - MYSQL_ROOT_USER=${MYSQL_ROOT_USER}

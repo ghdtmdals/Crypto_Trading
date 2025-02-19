@@ -1,18 +1,5 @@
 ### Power BI Script for Data Load and Transform
 
-"""
-cd /power_bi
-
-docker run -d -v "$PWD":/remote_dump \
-    -p 3307:3306 \
-    -e EDITOR=/usr/bin/nano
-    --env-file ../.env \
-    --restart always \
-    --name remote_db \
-    mysql:latest
-"""
-
-
 ### pip install sqlalchemy pymysql pandas scikit-learn
 import pymysql
 # from pymysql.constants import CLIENT
@@ -28,8 +15,8 @@ from tqdm import tqdm
 ################################################################################
 
 conn = pymysql.connect(
-                host = 'localhost',
-                port = 3307,
+                host = 'remote_mysql',
+                port = 3306,
                 user = "root",
                 password = "1111",
                 database = "crypto_db",
@@ -63,7 +50,7 @@ conn.close()
 ############################## Metrics Calculation ##############################
 #################################################################################
 
-engine = create_engine("mysql+pymysql://root:1111@localhost:3307/crypto_db")
+engine = create_engine("mysql+pymysql://root:1111@remote_mysql:3306/crypto_db")
 conn = engine.connect()
 
 query = "SELECT * FROM Result_Metrics;"
