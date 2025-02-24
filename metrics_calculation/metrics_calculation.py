@@ -19,8 +19,7 @@ def set_connection():
     mysql_db = os.environ['MYSQL_DATABASE']
 
     engine = create_engine(f"mysql+pymysql://{mysql_user}:{mysql_password}@{mysql_host}/{mysql_db}")
-    conn = engine.connect()
-    return engine, conn
+    return engine
 
 def read_log_table(conn):
     check_table_exists_query = 'SHOW TABLES;'
@@ -108,27 +107,24 @@ def update_table(df, engine):
     df.to_sql(name = "clsf_metrics", con = engine, if_exists = "replace", index = False)
 
 if __name__ == "__main__":
-    engine, conn = set_connection()
-
-    # log_df = read_log_table(conn)
-    # log_df = add_metrics(log_df)
-
-    # start = datetime.datetime.now()
-    # log_df = dep_update_metrics(log_df)
-    # end = datetime.datetime.now()
-    # print("Previous Loop Time Elapsed: ", (end - start))
+    engine = set_connection()
+    conn = engine.connect()
 
     log_df = read_log_table(conn)
+    conn.close()
+
     log_df = add_metrics(log_df)
+
     log_df = update_metrics(log_df)
 
     # start = datetime.datetime.now()
     # end = datetime.datetime.now()
     # print("Optimized Loop Time Elapsed: ", (end - start))
 
+    conn = engine.connect()
     update_table(log_df, engine)
+    conn.close()
 
     # print(log_df)
 
-    conn.close()
     engine.dispose()
