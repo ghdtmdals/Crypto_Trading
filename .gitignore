@@ -3,4 +3,4 @@ remote_dump/crypto_db.sql
 remote_dump/scheduler.log
 
 metrics_calculation/__pycache__/
-metrics_calculation/test.ipynb/
+metrics_calculation/test.ipynb
