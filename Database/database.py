@@ -18,8 +18,7 @@ class CryptoDB:
                         database = os.environ['MYSQL_DATABASE'],
                         client_flag = CLIENT.MULTI_STATEMENTS
                     )
-        # self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-        self.cursor = None
+        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
 
         self.create_tables()
         self.collect_crypto_info()
@@ -40,8 +39,6 @@ class CryptoDB:
     ### DB 테이블 생성
     def create_tables(self) -> None:
         print("Creating Tables and Etc...")
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-        
         with open("./Database/create_tables.sql", "r") as f:
             sql = f.read()
         self.cursor.execute(sql)
@@ -53,32 +50,21 @@ class CryptoDB:
         with open("./Database/create_functions.sql", "r") as f:
             sql = f.read()
         self.cursor.execute(sql)
-
-        self.cursor.close()
     
     def get_token(self) -> str:
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
         query = f"SELECT token FROM Crypto_Info WHERE english_name = '{self.coin_name}'"
         self.cursor.execute(query)
         result = self.cursor.fetchall()
-        
-        self.cursor.close()
-
         return result[0]['token'] ### [(token, )]
 
     ### DB에서 COLUMN 별 데이터 타입 받은 다음에 길이 비교
     ### DECIMAL, VARCHAR만 확인하면 됨
     ### input_data: List[tuple] || tuple
     def check_data_type(self, input_data, table_name: str) -> None:
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
         query = "SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE " \
                 + f"FROM information_schema.COLUMNS WHERE 1=1 AND TABLE_NAME = '{table_name} AND COLUMN_NAME IS NOT id' ORDER BY ORDINAL_POSITION;"
         self.cursor.execute(query)
         data_table = self.cursor.fetchall()
-
-        self.cursor.close()
 
         if type(input_data) is not list:
             input_data = [input_data]
@@ -90,8 +76,6 @@ class CryptoDB:
         ### 매번 데이터를 확인하면서 데이터가 입력 가능한 길이를 초과하는지 확인 -> 어차피 최대값 찾는것도 모든 데이터를 한 번은 훑어야 함
         for data in input_data:
             for i in range(len(data_table)):
-                self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
                 if data_table[i]['DATA_TYPE'] == 'varchar':
                     ### 입력할 텍스트 길이 + 1이 제한 길이보다 길 경우 제한 길이를 입력할 텍스트 길이 + 1로 변경
                     if len(data[i]) + 1 > data_table[i]['CHARACTER_MAXIMUM_LENGTH']:
@@ -106,8 +90,6 @@ class CryptoDB:
                         length = len(temp_float) + 1
                         query = f"ALTER TABLE {table_name} MODIFY COLUMN {data_table[i]['COLUMN_NAME']} DECIMAL({length}, {data_table[i]['NUMERIC_SCALE']})"
                         self.cursor.execute(query)
-                
-                self.cursor.close()
     
     ### 일정 주기로 호출되도록 설정
     def collect_crypto_info(self) -> None:
@@ -124,20 +106,14 @@ class CryptoDB:
 
         self.check_data_type(crypto_info, 'Crypto_Info')
         
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-        
         query = "INSERT IGNORE INTO Crypto_Info (token, english_name, korean_name) VALUES (%s, %s, %s);"
         self.cursor.executemany(query, crypto_info)
         self.conn.commit()
-
-        self.cursor.close()
 
     def save_price_data(self) -> None:
         data = self.upbit()
         self.check_data_type(data, 'Upbit')
 
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-        
         query = "INSERT INTO Upbit (" \
                 + "token, trade_date_kst, trade_time_kst, high_price, low_price, opening_price, trade_price, signed_change_rate, " \
                 + "warning, deposit_amount_soaring, global_price_differences, price_fluctuations, " \
@@ -146,12 +122,8 @@ class CryptoDB:
         self.cursor.execute(query, data)
         self.conn.commit()
 
-        self.cursor.close()
-
     def save_news_data(self) -> None:
         for news in self.news:
-            self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
             print(f"Collecting {news.coin_name} News Data From {news.source}")
             data = news()
             self.check_data_type(data, 'News')
@@ -161,18 +133,11 @@ class CryptoDB:
             query = "INSERT INTO News (token, news_date, news_source, title, sentiment) VALUES (%s, %s, %s, %s, %s)"
             self.cursor.executemany(query, data)
             self.conn.commit()
-            
-            self.cursor.close()
         
-
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
         ### 중복 뉴스 삭제
         query = "DELETE a FROM News a, News b WHERE a.id > b.id AND a.title = b.title;"
         self.cursor.execute(query)
         self.conn.commit()
-
-        self.cursor.close()
 
     def save_chart_data(self) -> None:
         self.upbit_candle.save_chart_image()
@@ -186,8 +151,6 @@ class CryptoDB:
                data[1]['krw_balance'], data[1]['token_balance'], data[2], data[3], json.dumps(data[4]))
         self.check_data_type(log, 'Trade_Log')
 
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
         query = "INSERT INTO Trade_Log (" \
                 + "token, trade_date, trade_time, krw_balance, token_balance, trade_call, target, trade_result" \
                 + ") VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
@@ -195,11 +158,7 @@ class CryptoDB:
         self.cursor.execute(query, log)
         self.conn.commit()
 
-        self.cursor.close()
-
     def get_target(self) -> float:
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
         ### 처음 실행하면 가격 데이터가 늦게 들어가서 Nonetype 에러 발생
         ### 1시간 평균 변화율
         ### 직전 시간 ~ 60개 테이블 -> 현재 시간 ~ 60개 테이블 join -> 변화율 계산
@@ -214,10 +173,6 @@ class CryptoDB:
         self.cursor.execute(query)
         avg_change_rate = self.cursor.fetchall()
 
-        self.cursor.close()
-
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
         ### 직전 두 개 가격 데이터 호출 (현 시점 + 직전 시점 가격 정보)
         query = "SELECT (trade_price - price_before) / price_before AS change_rate " \
                 + "FROM " \
@@ -226,27 +181,18 @@ class CryptoDB:
                 + "ORDER BY trade_date_kst DESC, trade_time_kst DESC " \
                 + "LIMIT 1) S;"
         self.cursor.execute(query)
-        
         change_rate = self.cursor.fetchall()
-    
-        self.cursor.close()
 
         return change_rate[0]['change_rate'], avg_change_rate[0]['change_rate']
     
     def get_eval_data(self) -> dict:
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
         query = "SELECT trade_call, target FROM Trade_Log WHERE TIMESTAMP(trade_date, trade_time) >= DATE_ADD(NOW(), INTERVAL -1 DAY);"
         self.cursor.execute(query)
         result = self.cursor.fetchall()
 
-        self.cursor.close()
-
         return result
 
     def load_data(self, sentiment_days: int = 1, sentiment_type: str = 'all', sentiment_alpha: float = 0.5) -> dict:
-        self.cursor = self.conn.cursor(pymysql.cursors.DictCursor)
-
         sentiment_types = {'all': 'SENTIMENT_RATIO',
                            'pos_neg': 'POS_NEG_RATIO',
                            'avg': 'AVG_SENTIMENT'}
@@ -263,8 +209,6 @@ class CryptoDB:
         
         self.cursor.execute(query)
         result = self.cursor.fetchall()[0]
-
-        self.cursor.close()
 
         ### MySQL 데이터 타입 -> Python 데이터 타입
         result['sentiment'] = float(result['sentiment'])
