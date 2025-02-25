@@ -33,13 +33,14 @@
     |  | **API 호출 기반 태스크 수행** | **Flask 기반 API 구현** |
 3. **Future Plan**
     - **뉴스 본문 수집 및 데이터 마트 구축**
-    - **실시간 자동매매 모델 성능 Monitoring 환경 구축**
 
 ---
 
 ---
 
 ## 프로젝트 구조
+
+## 암호화폐 자동매매
 
 ```
 📦Crypto_Trading
@@ -80,6 +81,30 @@
 ┣ 📜main.py
 ┣ 📜run_before_docker_compose.sh
 ┣ 📜set_env.sh
+```
+
+## Power BI 시각화
+
+```
+📦power_bi
+┣ 📂metrics_calculation
+┃ ┣ 📂__pycache__
+┃ ┃ ┗ 📜custom_metrics.cpython-312.pyc
+┃ ┣ 📜custom_metrics.py
+┃ ┣ 📜metrics_calculation.py
+┃ ┗ 📜test.ipynb
+┣ 📂remote_dump
+┃ ┣ 📜crypto_db.sql
+┃ ┣ 📜remote_dump.sh
+┃ ┗ 📜scheduler.log
+┣ 📜.env
+┣ 📜.gitignore
+┣ 📜Dockerfile
+┣ 📜cron.log
+┣ 📜crontab_test.sh
+┣ 📜docker-compose.yml
+┣ 📜scheduled_task.sh
+┗ 📜visualization.pbix
 ```
 
 ---
